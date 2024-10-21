@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+    <title>CausalGraph Visualiser</title>
+</head>
+
+<body>
+    <div class="container">
+        
+        <h1>CSV zu DOT</h1>
+
+        <div class="pag-section">
+            <h2>PAG Matrix</h2>
+            <input type="file" id="csvFileInput" accept=".csv">
+            <button id="inputButtonPagMatrix" class="button">Konvertieren</button>
+            <textarea id="dotOutput" placeholder="DOT-Syntax erscheint hier..." rows="10" cols="50" readonly></textarea>
+        </div>
+
+    </div>
+
+    <script src="../js/main.js"></script> <!-- implementing von .js datein am Ende is good practice -->
+</body>
+
+</html>
