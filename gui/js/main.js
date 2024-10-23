@@ -17,7 +17,7 @@ function pagFileUpload() {
 //Für AMDG muss probably doch eine eigene her, da wir ja nur
 //ein file und eine processFunction akzeptieren, maybe macht es das
 //ganze dann auch übersichtlicher als alles in eine function zu stopfen
-//TODO: rename into pagFileReader, aufpassen! nicht nur FileReader um 
+//TODO: rename into pagFileReader, aufpassen! nicht nur FileReader um
 //verwirrung zu vermeiden und für AMDG auch einen
 function readFile(file, processFunction) {
   //Wir lesen unsere .csv datei hiermit ein (sollte auf für .txt gehen)
@@ -28,21 +28,103 @@ function readFile(file, processFunction) {
   //zu dot-language code verantwortlich ist
   fr.onload = function (event) {
     const fileContent = event.target.result;
-
-    //TODO: Das Ding hier entfernen, nur zum überprüfen ob der Inhalt der
-    //.csv datei korrekt eingelesen wird, indem ich ihn im Feld für die
-    //umgewandelte DOT-Language anzeige
-    document.getElementById("pagToDotOutput").value = fileContent;
-
     processFunction(fileContent);
   };
 
+  //Ich versteh das noch nicht ganz von der positionierung
+  //aber yt-tutorial-atze sagt muss so :(
   fr.readAsText(file);
 }
 
+//.csv content in angenehmeres Format umwandeln
+function pagParseContent(csvContent) {
+  return csvContent
+    .trim()
+    .split("\n")
+    .map((row) => row.split(","));
+}
+
+//Diese Funktion erzeugt die passenden Kanten zwischen zwei Knoten
+//TODO (solved): Die ganzen typen mit sich selbst fehlen, also (A&A=1) oder so
+//ANTWORT TODO: quellKnoten==zielKnoten wird bei der eingabe ignoriert, da
+//schleifen bei PAGs nicht elaubt sind (für ADMGs gilt das selbe)
+function pagCreateDotEdges(
+  quellKnoten,
+  zielKnoten,
+  kantenTypFromTo,
+  kantenTypToFrom
+) {
+  //zunächst bidirectionale Kanten behandeln
+  if (kantenTypFromTo === 2 && kantenTypToFrom === 1) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=odot];`;
+  } else if (kantenTypFromTo === 1 && kantenTypToFrom === 1) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=odot];`;
+  } else if (kantenTypFromTo === 1 && kantenTypToFrom === 2) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=normal];`;
+  } else if (kantenTypFromTo === 2 && kantenTypToFrom === 2) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=normal];`;
+  } else if (kantenTypFromTo === 2 && kantenTypToFrom === 3) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=none];`;
+  } else if (kantenTypFromTo === 3 && kantenTypToFrom === 2) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=normal];`;
+  } else if (kantenTypFromTo === 3 && kantenTypToFrom === 3) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=none];`;
+  }
+  //kantenTypFromTo = 1,2,3 und kanytenTypToFrom = 0:
+  else if (kantenTypFromTo === 2) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=none];`;
+  } else if (kantenTypFromTo === 3) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=none];`; //not tee!
+  } else if (kantenTypFromTo === 1) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=odot];`;
+  }
+  //kantenTypToFrom = 1,2,3 und kantenTypFromTo = 0:
+  else if (kantenTypToFrom === 2) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=normal];`;
+  } else if (kantenTypToFrom === 3) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=none];`; //not tee!
+  } else if (kantenTypToFrom === 1) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=normal];`;
+  }
+  return null;
+}
+
+//Verarbeitet den Matrix Inhalt eines PAGs aus der csv Datei
 function pagMatrixToDot(csvContent) {
-  //to be implemented
-  //Wir müssen iwie die definitionen der matrix auf die passenden
-  //codes in der dot-language mappen und ausgeben, ausgeben in anderer
-  //funktion machen
+  //Inhalt mit pagParseContent vorbereiten und speichern
+  const zeilen = pagParseContent(csvContent);
+
+  //Erste Zeile und Spalte sind identisch, daher können wir uns einf aus einem
+  //der beiden, hier jetzt der ersten Zeile die Knoten unseres Graphens
+  //rausnehmen
+  const knotenNamen = zeilen[0].slice(1);
+
+  //Hier werden die umgewandelten kanten in dot-language drin gespeichert
+  const dotEdges = new Set();
+
+  //hier passiert die magie, wir wandeln die matrix in dot-language format um
+  for (let i = 1; i < zeilen.length; i++) {
+    const quellKnoten = zeilen[i][0];
+    for (let j = i + 1; j < zeilen[i].length; j++) {
+      const kantenTypFromTo = parseInt(zeilen[i][j]);
+      const kantenTypToFrom = parseInt(zeilen[j][i]);
+      const zielKnoten = knotenNamen[j - 1];
+
+      //Wandle Kante von angepasstem Matrix format in dot-language um
+      const edge = pagCreateDotEdges(
+        quellKnoten,
+        zielKnoten,
+        kantenTypFromTo,
+        kantenTypToFrom
+      );
+      //Fügt die edges in Dot-Language nem set hinzu
+      if (edge) {
+        dotEdges.add(edge);
+      }
+    }
+  }
+
+  //Jetzt wird anstatt dem .csv content, unser content in dot-language ausgegeben
+  const dotDigraph = `digraph {\n${[...dotEdges].join("\n")}\n}`;
+  document.getElementById("pagToDotOutput").value = dotDigraph;
 }
