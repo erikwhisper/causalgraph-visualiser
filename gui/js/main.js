@@ -99,6 +99,10 @@ function pagMatrixToDot(csvContent) {
   //rausnehmen
   const knotenNamen = zeilen[0].slice(1);
 
+  //Hiermit wird einfach die matrix aus der .csv datei angezeigt
+  const matrixOutput = zeilen.map(row => row.join(", ")).join("\n");
+  document.getElementById("pagDotToMatrixOutput").value = matrixOutput;
+
   //Hier werden die umgewandelten kanten in dot-language drin gespeichert
   const dotEdges = new Set();
 
@@ -126,5 +130,5 @@ function pagMatrixToDot(csvContent) {
 
   //Jetzt wird anstatt dem .csv content, unser content in dot-language ausgegeben
   const dotDigraph = `digraph {\n${[...dotEdges].join("\n")}\n}`;
-  document.getElementById("pagToDotOutput").value = dotDigraph;
+  document.getElementById("pagMatrixToDotOutput").value = dotDigraph;
 }
