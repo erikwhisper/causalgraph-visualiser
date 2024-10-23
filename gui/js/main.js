@@ -9,7 +9,8 @@ function pagFileUpload() {
   //wir erstellen eine const von unserer .csv Datei aus der html in js
   const pagFileInput = document.getElementById("pagCsvFileInput").files[0];
   if (pagFileInput) {
-    readFile(pagFileInput, pagMatrixToDot);
+    //AENDERUNG: neue processFunction, jetzt mit umweg
+    readFile(pagFileInput, handlePagConversion);
   }
 }
 
@@ -35,6 +36,24 @@ function readFile(file, processFunction) {
   //aber yt-tutorial-atze sagt muss so :(
   fr.readAsText(file);
 }
+
+//Wir haben die verwendung von "document" aus den anderen functions rausgezogen
+function handlePagConversion(csvContent) {
+  //zeigt matrix aus csv an
+  const matrixOutput = pagFormatMatrix(csvContent);
+  document.getElementById("pagDotToMatrixOutput").value = matrixOutput;
+
+  //zeigt inhalt aus csv in dot-language umgewandelt an
+  const dotGraph = pagMatrixToDot(csvContent);
+  document.getElementById("pagMatrixToDotOutput").value = dotGraph;
+}
+
+function pagFormatMatrix(csvContent) {
+  const zeilen = pagParseContent(csvContent);
+  return zeilen.map((row) => row.join(", ")).join("\n");
+}
+
+//NEU//////////////////////////
 
 //.csv content in angenehmeres Format umwandeln
 function pagParseContent(csvContent) {
@@ -99,9 +118,10 @@ function pagMatrixToDot(csvContent) {
   //rausnehmen
   const knotenNamen = zeilen[0].slice(1);
 
+  //AENDERUNG: Den schritt haben wir rausgenommen
   //Hiermit wird einfach die matrix aus der .csv datei angezeigt
-  const matrixOutput = zeilen.map((row) => row.join(", ")).join("\n");
-  document.getElementById("pagDotToMatrixOutput").value = matrixOutput;
+  //const matrixOutput = zeilen.map((row) => row.join(", ")).join("\n");
+  //document.getElementById("pagDotToMatrixOutput").value = matrixOutput;
 
   //Hier werden die umgewandelten kanten in dot-language drin gespeichert
   const dotEdges = new Set();
@@ -128,7 +148,9 @@ function pagMatrixToDot(csvContent) {
     }
   }
 
+  //AENDERUNG: Den schritt haben wir rausgenommen.
   //Jetzt wird anstatt dem .csv content, unser content in dot-language ausgegeben
-  const dotDigraph = `digraph {\n${[...dotEdges].join("\n")}\n}`;
-  document.getElementById("pagMatrixToDotOutput").value = dotDigraph;
+  //const dotDigraph = `digraph {\n${[...dotEdges].join("\n")}\n}`;
+  //document.getElementById("pagMatrixToDotOutput").value = dotDigraph;
+  return `digraph {\n${[...dotEdges].join("\n")}\n}`;
 }
