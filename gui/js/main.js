@@ -14,26 +14,17 @@ function pagFileUpload() {
   }
 }
 
-// Kann für PAG Matrix als auch für AMDG Matrices genutzt werden
-//Für AMDG muss probably doch eine eigene her, da wir ja nur
-//ein file und eine processFunction akzeptieren, maybe macht es das
-//ganze dann auch übersichtlicher als alles in eine function zu stopfen
 //TODO: rename into pagFileReader, aufpassen! nicht nur FileReader um
-//verwirrung zu vermeiden und für AMDG auch einen
+//TODO: für amdg eigene erstellen
 function readFile(file, processFunction) {
   //Wir lesen unsere .csv datei hiermit ein (sollte auf für .txt gehen)
   const fr = new FileReader();
 
-  //wenn fertig eingelesen erstellen wir eine const mit dem file Inhalt und rufen
-  //unsere callback funktion auf, die hier für das übersetzen von matrix
-  //zu dot-language code verantwortlich ist
   fr.onload = function (event) {
     const fileContent = event.target.result;
     processFunction(fileContent);
   };
 
-  //Ich versteh das noch nicht ganz von der positionierung
-  //aber yt-tutorial-atze sagt muss so :(
   fr.readAsText(file);
 }
 
@@ -63,10 +54,6 @@ function pagParseContent(csvContent) {
     .map((row) => row.split(","));
 }
 
-//Diese Funktion erzeugt die passenden Kanten zwischen zwei Knoten
-//TODO (solved): Die ganzen typen mit sich selbst fehlen, also (A&A=1) oder so
-//ANTWORT TODO: quellKnoten==zielKnoten wird bei der eingabe ignoriert, da
-//schleifen bei PAGs nicht elaubt sind (für ADMGs gilt das selbe)
 function pagCreateDotEdges(
   quellKnoten,
   zielKnoten,
@@ -118,11 +105,6 @@ function pagMatrixToDot(csvContent) {
   //rausnehmen
   const knotenNamen = zeilen[0].slice(1);
 
-  //AENDERUNG: Den schritt haben wir rausgenommen
-  //Hiermit wird einfach die matrix aus der .csv datei angezeigt
-  //const matrixOutput = zeilen.map((row) => row.join(", ")).join("\n");
-  //document.getElementById("pagDotToMatrixOutput").value = matrixOutput;
-
   //Hier werden die umgewandelten kanten in dot-language drin gespeichert
   const dotEdges = new Set();
 
@@ -148,9 +130,5 @@ function pagMatrixToDot(csvContent) {
     }
   }
 
-  //AENDERUNG: Den schritt haben wir rausgenommen.
-  //Jetzt wird anstatt dem .csv content, unser content in dot-language ausgegeben
-  //const dotDigraph = `digraph {\n${[...dotEdges].join("\n")}\n}`;
-  //document.getElementById("pagMatrixToDotOutput").value = dotDigraph;
   return `digraph {\n${[...dotEdges].join("\n")}\n}`;
 }
