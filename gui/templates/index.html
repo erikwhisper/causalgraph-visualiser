@@ -15,20 +15,23 @@
       <div class="pag-section">
         <h2>PAG Matrix</h2>
         <input type="file" id="pagCsvFileInput" accept=".csv" />
-        <button id="pagInitializeButton" class="button">
-          Einlesen
-        </button>
+        <button id="pagInitializeButton" class="button">Einlesen</button>
 
         <textarea
-        id="pagDotToMatrixOutput"
-        placeholder="Matrix wird hier angezeigt..."
-        rows="10"
-        cols="50"
-      ></textarea> <!-- readonly entfernt -->
+          id="pagDotToMatrixOutput"
+          placeholder="Matrix wird hier angezeigt..."
+          rows="10"
+          cols="50"
+        ></textarea>
+        <!-- readonly entfernt -->
 
-      <button id="pagToDotButton" class="button">
-        Matrix -> DOT
-      </button> <!-- Neuen Button hinzugefügt -->
+        <div class="button-container">
+          <button id="pagToDotButton" class="button">Matrix -> DOT</button>
+          <button id="dotToMatrixButton" class="button">
+            <!--maybe pagToMatrixButton besserer name?!-->
+            DOT -> Matrix
+          </button>
+        </div>
 
         <!--Mit Tests checken, nen limit ergibt ja keinen Sinn eig-->
         <textarea

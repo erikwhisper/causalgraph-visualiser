@@ -40,6 +40,12 @@ textarea {
   resize: none;
 }
 
+.button-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .button {
   background: #dcce9d;
   width: 120px;
