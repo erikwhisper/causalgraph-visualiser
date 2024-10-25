@@ -36,32 +36,28 @@ function readFile(file, processFunction) {
   fr.readAsText(file);
 }
 
-// NEU //
-
-//to be implemented/refactored
-
-// NEU //
-
 //Wir haben die verwendung von "document" aus den anderen functions rausgezogen
 function initializePagConversion(csvContent) {
+  const parsedPagMatrix = pagParseContent(csvContent); //NEU +line
+
   //zeigt matrix aus csv an
   const unchangedMatrixOutput = pagFormatMatrix(csvContent);
   document.getElementById("pagDotToMatrixOutput").value = unchangedMatrixOutput;
 
   //zeigt inhalt aus csv in dot-language umgewandelt an
-  const dotGraph = pagMatrixToDot(csvContent);
+  const dotGraph = convertMatrixToDot(parsedPagMatrix); //NEU csvContent -> parsedPagMatrix && pagMatrixToDot -> convertMatrixToDot
   document.getElementById("pagMatrixToDotOutput").value = dotGraph;
 }
 
 function convertEditedMatrixToDot() {
-  //matrix aus textfeld einlesen, anstatt aus file
+  //holt sich den inhalt der textarea mit gegebeber id
   const currentPagMatrix = document.getElementById(
     "pagDotToMatrixOutput"
   ).value;
-
-  //parsen, wie beim file und in dot-language uebersetzen und anzeigen
+  //bereitet aktuelle textfeld matrix vor
   const parsedPagMatrix = pagParseContent(currentPagMatrix);
-  const dotGraph = textareaPagMatrixToDot(parsedPagMatrix);
+  //sorgt fürs magische matrix to dot umformen
+  const dotGraph = convertMatrixToDot(parsedPagMatrix);
   document.getElementById("pagMatrixToDotOutput").value = dotGraph;
 }
 
@@ -69,8 +65,6 @@ function pagFormatMatrix(csvContent) {
   const zeilen = pagParseContent(csvContent);
   return zeilen.map((row) => row.join(", ")).join("\n");
 }
-
-//NEU//////////////////////////
 
 //.csv content in angenehmeres Format umwandeln
 function pagParseContent(csvContent) {
@@ -121,54 +115,11 @@ function pagCreateDotEdges(
   return null;
 }
 
-//TODO: Diese Funktion ist für den Button verantwortlich der aus der
-//Matrix aus der *.csv-datei* eine Dot-language variante erstellt
-function pagMatrixToDot(csvContent) {
-  //Inhalt mit pagParseContent vorbereiten und speichern
-  const zeilen = pagParseContent(csvContent);
-
-  //Erste Zeile und Spalte sind identisch, daher können wir uns einf aus einem
-  //der beiden, hier jetzt der ersten Zeile die Knoten unseres Graphens
-  //rausnehmen
-  const knotenNamen = zeilen[0].slice(1);
-
-  //Hier werden die umgewandelten kanten in dot-language drin gespeichert
-  const dotEdges = new Set();
-
-  //hier passiert die magie, wir wandeln die matrix in dot-language format um
-  for (let i = 1; i < zeilen.length; i++) {
-    const quellKnoten = zeilen[i][0];
-    for (let j = i + 1; j < zeilen[i].length; j++) {
-      const kantenTypFromTo = parseInt(zeilen[i][j]);
-      const kantenTypToFrom = parseInt(zeilen[j][i]);
-      const zielKnoten = knotenNamen[j - 1];
-
-      //Wandle Kante von angepasstem Matrix format in dot-language um
-      const edge = pagCreateDotEdges(
-        quellKnoten,
-        zielKnoten,
-        kantenTypFromTo,
-        kantenTypToFrom
-      );
-      //Fügt die edges in Dot-Language nem set hinzu
-      if (edge) {
-        dotEdges.add(edge);
-      }
-    }
-  }
-
-  return `digraph {\n${[...dotEdges].join("\n")}\n}`;
-}
-
-//TODO: Diese Funktion ist für den Button verantwortlich der aus der
-//Matrix im *textfeld* eine Dot-language variante erstellt
-function textareaPagMatrixToDot(parsedPagMatrix) {
+//refactored variante die die schon angepasste .csv und textarea direkt umwandelt
+function convertMatrixToDot(parsedPagMatrix) {
   const knotenNamen = parsedPagMatrix[0].slice(1);
-
-  //Hier werden die umgewandelten kanten in dot-language drin gespeichert
   const dotEdges = new Set();
 
-  //hier passiert die magie, wir wandeln die matrix in dot-language format um
   for (let i = 1; i < parsedPagMatrix.length; i++) {
     const quellKnoten = parsedPagMatrix[i][0];
     for (let j = i + 1; j < parsedPagMatrix[i].length; j++) {
@@ -176,14 +127,12 @@ function textareaPagMatrixToDot(parsedPagMatrix) {
       const kantenTypToFrom = parseInt(parsedPagMatrix[j][i]);
       const zielKnoten = knotenNamen[j - 1];
 
-      //Wandle Kante von angepasstem Matrix format in dot-language um
       const edge = pagCreateDotEdges(
         quellKnoten,
         zielKnoten,
         kantenTypFromTo,
         kantenTypToFrom
       );
-      //Fügt die edges in Dot-Language nem set hinzu
       if (edge) {
         dotEdges.add(edge);
       }
