@@ -4,11 +4,19 @@
 const readinButtonForPag = document.getElementById("pagInitializeButton");
 readinButtonForPag.addEventListener("click", pagFileUpload);
 
-//BUTTON 2: const von unserem "pagToDot" button
+//BUTTON 2: const von unserem "MatrixToDot" button
 const convertPagToDotButton = document.getElementById("pagToDotButton");
 convertPagToDotButton.addEventListener("click", convertEditedMatrixToDot);
 
+//BUTTON 3: const von userem "DotToMatrix"
+const convertDotToMatrixButton = document.getElementById("dotToMatrixButton");
+convertDotToMatrixButton.addEventListener("click", convertDotToMatrix);
+
 //START: EVENT LISTENERS FOR BUTTONS//
+
+// NEU //
+function convertDotToMatrix() {/*to be implemented*/}
+// NEU //
 
 //FUNCTION FOR BUTTON 1: Nur für PAG Matrix, andere für ADMG erstellen
 function pagFileUpload() {
