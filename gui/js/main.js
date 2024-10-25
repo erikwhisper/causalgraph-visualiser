@@ -3,23 +3,22 @@
 
 //START: EVENT LISTENERS FOR BUTTONS//
 
-//wir erstellen eine const von unserem "Einlesen" button aus der html in js
-const readinButtonForPag = document.getElementById("pagConvertButton");
-//wenn der button geklickt wird führen wir die funktion aus
+//BUTTON 1: const von "Einlesen" button
+const readinButtonForPag = document.getElementById("pagInitializeButton");
 readinButtonForPag.addEventListener("click", pagFileUpload);
 
-//Wir erstellen eine const von unserem "MatrixToDot" button aus der html in js
-const convertPagToDotButton = document.getElementById("pagToDotButton"); // NEU
-convertPagToDotButton.addEventListener("click", convertEditedMatrixToDot); // NEU
+//BUTTON 2: const von unserem "pagToDot" button
+const convertPagToDotButton = document.getElementById("pagToDotButton");
+convertPagToDotButton.addEventListener("click", convertEditedMatrixToDot);
+
 //START: EVENT LISTENERS FOR BUTTONS//
 
-// Nur für PAG Matrix, andere für ADMG erstellen
+//FUNCTION FOR BUTTON 1: Nur für PAG Matrix, andere für ADMG erstellen
 function pagFileUpload() {
-  //wir erstellen eine const von unserer .csv Datei aus der html in js
+  //Erstellt const von .csv Datei aus der html
   const pagFileInput = document.getElementById("pagCsvFileInput").files[0];
   if (pagFileInput) {
-    //AENDERUNG: neue processFunction, jetzt mit umweg
-    readFile(pagFileInput, initialisePagConversion);
+    readFile(pagFileInput, initializePagConversion);
   }
 }
 
@@ -37,8 +36,14 @@ function readFile(file, processFunction) {
   fr.readAsText(file);
 }
 
+// NEU //
+
+//to be implemented/refactored
+
+// NEU //
+
 //Wir haben die verwendung von "document" aus den anderen functions rausgezogen
-function initialisePagConversion(csvContent) {
+function initializePagConversion(csvContent) {
   //zeigt matrix aus csv an
   const unchangedMatrixOutput = pagFormatMatrix(csvContent);
   document.getElementById("pagDotToMatrixOutput").value = unchangedMatrixOutput;
@@ -158,7 +163,6 @@ function pagMatrixToDot(csvContent) {
 //TODO: Diese Funktion ist für den Button verantwortlich der aus der
 //Matrix im *textfeld* eine Dot-language variante erstellt
 function textareaPagMatrixToDot(parsedPagMatrix) {
- 
   const knotenNamen = parsedPagMatrix[0].slice(1);
 
   //Hier werden die umgewandelten kanten in dot-language drin gespeichert
