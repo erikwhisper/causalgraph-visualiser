@@ -12,7 +12,7 @@ function pagFileUpload() {
   const pagFileInput = document.getElementById("pagCsvFileInput").files[0];
   if (pagFileInput) {
     //AENDERUNG: neue processFunction, jetzt mit umweg
-    readFile(pagFileInput, handlePagConversion);
+    readFile(pagFileInput, initialisePagConversion);
   }
 }
 
@@ -31,10 +31,10 @@ function readFile(file, processFunction) {
 }
 
 //Wir haben die verwendung von "document" aus den anderen functions rausgezogen
-function handlePagConversion(csvContent) {
+function initialisePagConversion(csvContent) {
   //zeigt matrix aus csv an
-  const matrixOutput = pagFormatMatrix(csvContent);
-  document.getElementById("pagDotToMatrixOutput").value = matrixOutput;
+  const unchangedMatrixOutput = pagFormatMatrix(csvContent);
+  document.getElementById("pagDotToMatrixOutput").value = unchangedMatrixOutput;
 
   //zeigt inhalt aus csv in dot-language umgewandelt an
   const dotGraph = pagMatrixToDot(csvContent);
