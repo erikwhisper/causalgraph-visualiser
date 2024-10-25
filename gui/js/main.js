@@ -1,6 +1,3 @@
-//TODO: pagMatrixToDot und textareaPagMatrixToDot iwie zu einer Funktion
-//zusammenführen
-
 //START: EVENT LISTENERS FOR BUTTONS//
 
 //BUTTON 1: const von "Einlesen" button
