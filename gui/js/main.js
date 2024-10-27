@@ -12,10 +12,10 @@ convertPagToDotButton.addEventListener("click", convertEditedMatrixToDot);
 const convertDotToMatrixButton = document.getElementById("dotToMatrixButton");
 convertDotToMatrixButton.addEventListener("click", convertDotToMatrix);
 
-//START: EVENT LISTENERS FOR BUTTONS//
+//END: EVENT LISTENERS FOR BUTTONS//
 
-// NEU //
-function convertDotToMatrix() {/*to be implemented*/}
+// NEU - zeigt aktuell leere dynamische matrix an//
+function convertDotToMatrix() {}
 // NEU //
 
 //FUNCTION FOR BUTTON 1: Nur für PAG Matrix, andere für ADMG erstellen
@@ -88,34 +88,48 @@ function pagCreateDotEdges(
   //zunächst bidirectionale Kanten behandeln
   if (kantenTypFromTo === 2 && kantenTypToFrom === 1) {
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=odot];`;
-  } else if (kantenTypFromTo === 1 && kantenTypToFrom === 1) {
+  } 
+  
+  //alle cases mit 1 vorne
+  else if (kantenTypFromTo === 1 && kantenTypToFrom === 1) {
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=odot];`;
   } else if (kantenTypFromTo === 1 && kantenTypToFrom === 2) {
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=normal];`;
-  } else if (kantenTypFromTo === 2 && kantenTypToFrom === 2) {
+  } else if (kantenTypFromTo === 1 && kantenTypToFrom === 3) { //fehlte!!
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=tail];`;
+  }
+  
+  else if (kantenTypFromTo === 2 && kantenTypToFrom === 2) {
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=normal];`;
   } else if (kantenTypFromTo === 2 && kantenTypToFrom === 3) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=none];`;
-  } else if (kantenTypFromTo === 3 && kantenTypToFrom === 2) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=normal];`;
-  } else if (kantenTypFromTo === 3 && kantenTypToFrom === 3) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=none];`;
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=tail];`;
+  } else if (kantenTypFromTo === 2 && kantenTypToFrom === 1) { //fehlte!!
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=odot];`;
   }
+  
+  else if (kantenTypFromTo === 3 && kantenTypToFrom === 2) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=tail, arrowtail=normal];`;
+  } else if (kantenTypFromTo === 3 && kantenTypToFrom === 3) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=tail, arrowtail=tail];`;
+  } else if (kantenTypFromTo === 3 && kantenTypToFrom === 1) { //fehlte!
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=tail, arrowtail=odot];`;
+  }
+
   //kantenTypFromTo = 1,2,3 und kanytenTypToFrom = 0:
   else if (kantenTypFromTo === 2) {
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=none];`;
   } else if (kantenTypFromTo === 3) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=none];`; //not tee!
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=tail, arrowtail=none];`; //not tee!
   } else if (kantenTypFromTo === 1) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=odot];`;
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=none];`; //unsure, maybe switch
   }
   //kantenTypToFrom = 1,2,3 und kantenTypFromTo = 0:
   else if (kantenTypToFrom === 2) {
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=normal];`;
   } else if (kantenTypToFrom === 3) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=none];`; //not tee!
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=tail];`; //not tee!
   } else if (kantenTypToFrom === 1) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=normal];`;
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=odot];`; //unsure, maybe switch
   }
   return null;
 }
