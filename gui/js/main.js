@@ -14,7 +14,7 @@ convertDotToMatrixButton.addEventListener("click", convertDotToMatrix);
 
 //END: EVENT LISTENERS FOR BUTTONS//
 
-// NEU - zeigt aktuell leere dynamische matrix an//
+// NEU //
 function convertDotToMatrix() {}
 // NEU //
 
@@ -86,12 +86,8 @@ function pagCreateDotEdges(
   kantenTypToFrom
 ) {
   //zunächst bidirectionale Kanten behandeln
-  if (kantenTypFromTo === 2 && kantenTypToFrom === 1) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=odot];`;
-  } 
-  
   //alle cases mit 1 vorne
-  else if (kantenTypFromTo === 1 && kantenTypToFrom === 1) {
+  if (kantenTypFromTo === 1 && kantenTypToFrom === 1) {
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=odot];`;
   } else if (kantenTypFromTo === 1 && kantenTypToFrom === 2) {
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=normal];`;
@@ -99,6 +95,7 @@ function pagCreateDotEdges(
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=tail];`;
   }
   
+  //alle cases mit 2 vorne
   else if (kantenTypFromTo === 2 && kantenTypToFrom === 2) {
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=normal];`;
   } else if (kantenTypFromTo === 2 && kantenTypToFrom === 3) {
@@ -107,6 +104,7 @@ function pagCreateDotEdges(
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=odot];`;
   }
   
+  //alle cases mit 3 vorne
   else if (kantenTypFromTo === 3 && kantenTypToFrom === 2) {
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=tail, arrowtail=normal];`;
   } else if (kantenTypFromTo === 3 && kantenTypToFrom === 3) {
