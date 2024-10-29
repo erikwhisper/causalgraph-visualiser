@@ -14,9 +14,74 @@ convertDotToMatrixButton.addEventListener("click", convertDotToMatrix);
 
 //END: EVENT LISTENERS FOR BUTTONS//
 
-// NEU //
-function convertDotToMatrix() {}
-// NEU //
+//Converts Dot-language syntax into matrix
+function convertDotToMatrix() {
+  //dotSyntax aus der zweiten textarea
+  const dotSyntax = document.getElementById("pagMatrixToDotOutput").value;
+
+  //1: Knoten sammeln
+  const knoten = [];
+  const knotenSet = new Set();
+  const kantenPatternRegEx =
+    /"(\w+)"\s*->\s*"(\w+)"\s*\[dir=both,\s*arrowhead=(\w+),\s*arrowtail=(\w+)\]/g;
+  let match;
+
+  while ((match = kantenPatternRegEx.exec(dotSyntax)) !== null) {
+    const quellKnoten = match[1];
+    const zielKnoten = match[2];
+
+    //erst alle quellKnoten auf der rechten seite des Pfeils...
+    if (!knotenSet.has(quellKnoten)) {
+      knoten.push(quellKnoten);
+      knotenSet.add(quellKnoten);
+    }
+    //...dann alle zielKnoten von der linken Seite des Pfeils einlesen.
+    //sonst bleibt die in der Matrix gewünschte reihenfolge der knoten
+    //nicht erhalten, bzw wird durcheinander geworfen
+    if (!knotenSet.has(zielKnoten)) {
+      knoten.push(zielKnoten);
+      knotenSet.add(zielKnoten);
+    }
+  }
+
+  //2: matrix leer initialisieren
+  const matrixSize = knoten.length;
+  const matrix = Array.from({ length: matrixSize + 1 }, () =>
+    Array(matrixSize + 1).fill(0)
+  );
+
+  //knoten namen setzen
+  matrix[0][0] = '""'; //hardcoded, ist dieser eintrag in der ecke
+  knoten.forEach((knoten, index) => {
+    matrix[0][index + 1] = `"${knoten}"`;
+    matrix[index + 1][0] = `"${knoten}"`;
+  });
+
+  //3: unsere verschiedenen kanten definieren
+  const kantenArtenMap = {
+    none: 0,
+    odot: 1,
+    normal: 2,
+    tail: 3,
+  };
+
+  //4: matrix mit korrekten werten befüllen
+  kantenPatternRegEx.lastIndex = 0;
+  while ((match = kantenPatternRegEx.exec(dotSyntax)) !== null) {
+    const [_, quellKnoten, zielKnoten, arrowhead, arrowtail] = match;
+    const quellKnotenIndex = knoten.indexOf(quellKnoten) + 1;
+    const zielKnotenIndex = knoten.indexOf(zielKnoten) + 1;
+
+    matrix[quellKnotenIndex][zielKnotenIndex] = kantenArtenMap[arrowhead];
+    matrix[zielKnotenIndex][quellKnotenIndex] = kantenArtenMap[arrowtail];
+  }
+
+  //5: Matrix in anzuzeigendes format umwandeln
+  //hierfür maybe die funktion die das eh macht aufrufen?
+  //TODO: iwann mal genauer angucken, aktuell läufts ja lol
+  const matrixCsv = matrix.map((row) => row.join(", ")).join("\n");
+  document.getElementById("pagDotToMatrixOutput").value = matrixCsv;
+}
 
 //FUNCTION FOR BUTTON 1: Nur für PAG Matrix, andere für ADMG erstellen
 function pagFileUpload() {
@@ -91,25 +156,28 @@ function pagCreateDotEdges(
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=odot];`;
   } else if (kantenTypFromTo === 1 && kantenTypToFrom === 2) {
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=normal];`;
-  } else if (kantenTypFromTo === 1 && kantenTypToFrom === 3) { //fehlte!!
+  } else if (kantenTypFromTo === 1 && kantenTypToFrom === 3) {
+    //fehlte!!
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=tail];`;
   }
-  
+
   //alle cases mit 2 vorne
   else if (kantenTypFromTo === 2 && kantenTypToFrom === 2) {
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=normal];`;
   } else if (kantenTypFromTo === 2 && kantenTypToFrom === 3) {
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=tail];`;
-  } else if (kantenTypFromTo === 2 && kantenTypToFrom === 1) { //fehlte!!
+  } else if (kantenTypFromTo === 2 && kantenTypToFrom === 1) {
+    //fehlte!!
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=odot];`;
   }
-  
+
   //alle cases mit 3 vorne
   else if (kantenTypFromTo === 3 && kantenTypToFrom === 2) {
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=tail, arrowtail=normal];`;
   } else if (kantenTypFromTo === 3 && kantenTypToFrom === 3) {
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=tail, arrowtail=tail];`;
-  } else if (kantenTypFromTo === 3 && kantenTypToFrom === 1) { //fehlte!
+  } else if (kantenTypFromTo === 3 && kantenTypToFrom === 1) {
+    //fehlte!
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=tail, arrowtail=odot];`;
   }
 
