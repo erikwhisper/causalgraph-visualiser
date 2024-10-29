@@ -10,14 +10,13 @@
 
   <body>
     <div class="container">
-      <h1>CSV zu DOT</h1>
+      <!--<h1>CSV zu DOT</h1>-->
 
       <div class="pag-section">
         <h2>PAG Matrix</h2>
         <input type="file" id="pagCsvFileInput" accept=".csv" />
         <button id="pagInitializeButton" class="button">Einlesen</button>
 
-        <!--Mit Tests checken, nen limit ergibt ja keinen Sinn eig-->
         <textarea
           id="pagDotToMatrixOutput"
           placeholder="Matrix wird hier angezeigt..."
@@ -40,6 +39,17 @@
           cols="50"
         ></textarea>
         <!-- readonly entfernt -->
+      </div>
+
+      <!-- Neuer Bereich für AMDG Matrix -->
+      <div class="amdg-section">
+        <h2>AMDG Matrix</h2>
+        <textarea
+          id="amdgMatrixOutput"
+          placeholder="AMDG Matrix wird hier angezeigt..."
+          rows="10"
+          cols="50"
+        ></textarea>
       </div>
     </div>
 
