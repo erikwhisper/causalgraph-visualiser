@@ -14,6 +14,170 @@ convertDotToMatrixButton.addEventListener("click", convertDotToMatrix);
 
 //END: EVENT LISTENERS FOR BUTTONS//
 
+//---------------------------------//
+//--------PAG SECTION START--------//
+//---------------------------------//
+
+//------FUNCTION FOR BUTTON 1------//
+//Nur für PAG Matrix, andere für ADMG erstellen
+function pagFileUpload() {
+  const pagFileInput = document.getElementById("pagCsvFileInput").files[0];
+  if (pagFileInput) {
+    pagFileReader(pagFileInput, initializePagConversion);
+  }
+}
+
+//TODO: für amdg eigene erstellen
+//TODO: .txt support hinzufügen
+function pagFileReader(file, processFunction) {
+  const fr = new FileReader();
+
+  fr.onload = function (event) {
+    const fileContent = event.target.result;
+    processFunction(fileContent);
+  };
+
+  fr.readAsText(file);
+}
+
+function initializePagConversion(csvContent) {
+  const parsedPagMatrix = pagParseContent(csvContent);
+
+  //zeigt matrix aus csv an
+  const unchangedMatrixOutput = pagFormatMatrix(csvContent);
+  document.getElementById("pagDotToMatrixOutput").value = unchangedMatrixOutput;
+
+  //zeigt inhalt aus csv in dot-language umgewandelt an
+  const dotGraph = convertMatrixToDot(parsedPagMatrix); //NEU csvContent -> parsedPagMatrix && pagMatrixToDot -> convertMatrixToDot
+  document.getElementById("pagMatrixToDotOutput").value = dotGraph;
+}
+
+function pagFormatMatrix(csvContent) {
+  const zeilen = pagParseContent(csvContent);
+  return zeilen.map((row) => row.join(", ")).join("\n");
+}
+
+//------FUNCTION FOR BUTTON 1------//
+
+//---------------------------------//
+
+//------FUNCTION FOR BUTTON 2------//
+
+function convertEditedMatrixToDot() {
+  //holt sich den inhalt der textarea mit gegebeber id
+  const currentPagMatrix = document.getElementById(
+    "pagDotToMatrixOutput"
+  ).value;
+  //bereitet aktuelle textfeld matrix vor
+  const parsedPagMatrix = pagParseContent(currentPagMatrix);
+  //sorgt fürs magische matrix to dot umformen
+  const dotGraph = convertMatrixToDot(parsedPagMatrix);
+  document.getElementById("pagMatrixToDotOutput").value = dotGraph;
+}
+
+//------FUNCTION FOR BUTTON 2------//
+
+//---------------------------------//
+
+//----ALLGEMEINE FUNCTION (1&2)----//
+
+//.csv content in angenehmeres Format umwandeln
+function pagParseContent(csvContent) {
+  return csvContent
+    .trim()
+    .split("\n")
+    .map((row) => row.split(","));
+}
+
+//refactored variante die die schon angepasste .csv und textarea direkt umwandelt
+function convertMatrixToDot(parsedPagMatrix) {
+  const knotenNamen = parsedPagMatrix[0].slice(1);
+  const dotEdges = new Set();
+
+  for (let i = 1; i < parsedPagMatrix.length; i++) {
+    const quellKnoten = parsedPagMatrix[i][0];
+    for (let j = i + 1; j < parsedPagMatrix[i].length; j++) {
+      const kantenTypFromTo = parseInt(parsedPagMatrix[i][j]);
+      const kantenTypToFrom = parseInt(parsedPagMatrix[j][i]);
+      const zielKnoten = knotenNamen[j - 1];
+
+      const edge = pagCreateDotEdges(
+        quellKnoten,
+        zielKnoten,
+        kantenTypFromTo,
+        kantenTypToFrom
+      );
+      if (edge) {
+        dotEdges.add(edge);
+      }
+    }
+  }
+
+  return `digraph {\n${[...dotEdges].join("\n")}\n}`;
+}
+
+function pagCreateDotEdges(
+  quellKnoten,
+  zielKnoten,
+  kantenTypFromTo,
+  kantenTypToFrom
+) {
+  //zunächst bidirectionale Kanten behandeln
+  //alle cases mit 1 vorne
+  if (kantenTypFromTo === 1 && kantenTypToFrom === 1) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=odot];`;
+  } else if (kantenTypFromTo === 1 && kantenTypToFrom === 2) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=normal];`;
+  } else if (kantenTypFromTo === 1 && kantenTypToFrom === 3) {
+    //fehlte!!
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=tail];`;
+  }
+
+  //alle cases mit 2 vorne
+  else if (kantenTypFromTo === 2 && kantenTypToFrom === 2) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=normal];`;
+  } else if (kantenTypFromTo === 2 && kantenTypToFrom === 3) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=tail];`;
+  } else if (kantenTypFromTo === 2 && kantenTypToFrom === 1) {
+    //fehlte!!
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=odot];`;
+  }
+
+  //alle cases mit 3 vorne
+  else if (kantenTypFromTo === 3 && kantenTypToFrom === 2) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=tail, arrowtail=normal];`;
+  } else if (kantenTypFromTo === 3 && kantenTypToFrom === 3) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=tail, arrowtail=tail];`;
+  } else if (kantenTypFromTo === 3 && kantenTypToFrom === 1) {
+    //fehlte!
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=tail, arrowtail=odot];`;
+  }
+
+  //kantenTypFromTo = 1,2,3 und kanytenTypToFrom = 0:
+  else if (kantenTypFromTo === 2) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=none];`;
+  } else if (kantenTypFromTo === 3) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=tail, arrowtail=none];`; //not tee!
+  } else if (kantenTypFromTo === 1) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=none];`; //unsure, maybe switch
+  }
+  //kantenTypToFrom = 1,2,3 und kantenTypFromTo = 0:
+  else if (kantenTypToFrom === 2) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=normal];`;
+  } else if (kantenTypToFrom === 3) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=tail];`; //not tee!
+  } else if (kantenTypToFrom === 1) {
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=odot];`; //unsure, maybe switch
+  }
+  return null;
+}
+
+//----ALLGEMEINE FUNCTION (1&2)----//
+
+//---------------------------------//
+
+//------FUNCTION FOR BUTTON 3------//
+
 //Converts Dot-language syntax into matrix
 function convertDotToMatrix() {
   //dotSyntax aus der zweiten textarea
@@ -83,146 +247,9 @@ function convertDotToMatrix() {
   document.getElementById("pagDotToMatrixOutput").value = matrixCsv;
 }
 
-//FUNCTION FOR BUTTON 1: Nur für PAG Matrix, andere für ADMG erstellen
-function pagFileUpload() {
-  //Erstellt const von .csv Datei aus der html
-  const pagFileInput = document.getElementById("pagCsvFileInput").files[0];
-  if (pagFileInput) {
-    readFile(pagFileInput, initializePagConversion);
-  }
-}
+//------FUNCTION FOR BUTTON 3------//
 
-//TODO: rename into pagFileReader, aufpassen! nicht nur FileReader um
-//TODO: für amdg eigene erstellen
-function readFile(file, processFunction) {
-  //Wir lesen unsere .csv datei hiermit ein (sollte auf für .txt gehen)
-  const fr = new FileReader();
+//---------------------------------//
+//---------PAG SECTION END---------//
+//---------------------------------//
 
-  fr.onload = function (event) {
-    const fileContent = event.target.result;
-    processFunction(fileContent);
-  };
-
-  fr.readAsText(file);
-}
-
-//Wir haben die verwendung von "document" aus den anderen functions rausgezogen
-function initializePagConversion(csvContent) {
-  const parsedPagMatrix = pagParseContent(csvContent); //NEU +line
-
-  //zeigt matrix aus csv an
-  const unchangedMatrixOutput = pagFormatMatrix(csvContent);
-  document.getElementById("pagDotToMatrixOutput").value = unchangedMatrixOutput;
-
-  //zeigt inhalt aus csv in dot-language umgewandelt an
-  const dotGraph = convertMatrixToDot(parsedPagMatrix); //NEU csvContent -> parsedPagMatrix && pagMatrixToDot -> convertMatrixToDot
-  document.getElementById("pagMatrixToDotOutput").value = dotGraph;
-}
-
-function convertEditedMatrixToDot() {
-  //holt sich den inhalt der textarea mit gegebeber id
-  const currentPagMatrix = document.getElementById(
-    "pagDotToMatrixOutput"
-  ).value;
-  //bereitet aktuelle textfeld matrix vor
-  const parsedPagMatrix = pagParseContent(currentPagMatrix);
-  //sorgt fürs magische matrix to dot umformen
-  const dotGraph = convertMatrixToDot(parsedPagMatrix);
-  document.getElementById("pagMatrixToDotOutput").value = dotGraph;
-}
-
-function pagFormatMatrix(csvContent) {
-  const zeilen = pagParseContent(csvContent);
-  return zeilen.map((row) => row.join(", ")).join("\n");
-}
-
-//.csv content in angenehmeres Format umwandeln
-function pagParseContent(csvContent) {
-  return csvContent
-    .trim()
-    .split("\n")
-    .map((row) => row.split(","));
-}
-
-function pagCreateDotEdges(
-  quellKnoten,
-  zielKnoten,
-  kantenTypFromTo,
-  kantenTypToFrom
-) {
-  //zunächst bidirectionale Kanten behandeln
-  //alle cases mit 1 vorne
-  if (kantenTypFromTo === 1 && kantenTypToFrom === 1) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=odot];`;
-  } else if (kantenTypFromTo === 1 && kantenTypToFrom === 2) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=normal];`;
-  } else if (kantenTypFromTo === 1 && kantenTypToFrom === 3) {
-    //fehlte!!
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=tail];`;
-  }
-
-  //alle cases mit 2 vorne
-  else if (kantenTypFromTo === 2 && kantenTypToFrom === 2) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=normal];`;
-  } else if (kantenTypFromTo === 2 && kantenTypToFrom === 3) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=tail];`;
-  } else if (kantenTypFromTo === 2 && kantenTypToFrom === 1) {
-    //fehlte!!
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=odot];`;
-  }
-
-  //alle cases mit 3 vorne
-  else if (kantenTypFromTo === 3 && kantenTypToFrom === 2) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=tail, arrowtail=normal];`;
-  } else if (kantenTypFromTo === 3 && kantenTypToFrom === 3) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=tail, arrowtail=tail];`;
-  } else if (kantenTypFromTo === 3 && kantenTypToFrom === 1) {
-    //fehlte!
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=tail, arrowtail=odot];`;
-  }
-
-  //kantenTypFromTo = 1,2,3 und kanytenTypToFrom = 0:
-  else if (kantenTypFromTo === 2) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=none];`;
-  } else if (kantenTypFromTo === 3) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=tail, arrowtail=none];`; //not tee!
-  } else if (kantenTypFromTo === 1) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=none];`; //unsure, maybe switch
-  }
-  //kantenTypToFrom = 1,2,3 und kantenTypFromTo = 0:
-  else if (kantenTypToFrom === 2) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=normal];`;
-  } else if (kantenTypToFrom === 3) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=tail];`; //not tee!
-  } else if (kantenTypToFrom === 1) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=odot];`; //unsure, maybe switch
-  }
-  return null;
-}
-
-//refactored variante die die schon angepasste .csv und textarea direkt umwandelt
-function convertMatrixToDot(parsedPagMatrix) {
-  const knotenNamen = parsedPagMatrix[0].slice(1);
-  const dotEdges = new Set();
-
-  for (let i = 1; i < parsedPagMatrix.length; i++) {
-    const quellKnoten = parsedPagMatrix[i][0];
-    for (let j = i + 1; j < parsedPagMatrix[i].length; j++) {
-      const kantenTypFromTo = parseInt(parsedPagMatrix[i][j]);
-      const kantenTypToFrom = parseInt(parsedPagMatrix[j][i]);
-      const zielKnoten = knotenNamen[j - 1];
-
-      const edge = pagCreateDotEdges(
-        quellKnoten,
-        zielKnoten,
-        kantenTypFromTo,
-        kantenTypToFrom
-      );
-      if (edge) {
-        dotEdges.add(edge);
-      }
-    }
-  }
-
-  return `digraph {\n${[...dotEdges].join("\n")}\n}`;
-}
