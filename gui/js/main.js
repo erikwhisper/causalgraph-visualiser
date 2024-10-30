@@ -273,6 +273,14 @@ readinButtonForAdmg.addEventListener("click", admgFileUpload);
 const admgMatrixToDotButton = document.getElementById("admgMatrixToDotButton");
 admgMatrixToDotButton.addEventListener("click", admgMatrixToDotConversion);
 
+//BUTTON 3: dot zu jeweiligen matritzen conversion
+const dotToMatricesButton = document.getElementById("admgDotToMatrixButton");
+dotToMatricesButton.addEventListener("click", admgDotToMatricesConversion);
+
+function admgDotToMatricesConversion() {
+  /*to be implemented, kb mehr*/
+}
+
 //END: EVENT LISTENERS FOR BUTTONS FOR ADMG//
 
 //------FUNCTION FOR BUTTON 1------//
@@ -408,3 +416,7 @@ function admgMatrixToDotConversion() {
 }
 
 //------FUNCTION FOR BUTTON 2------//
+
+//------FUNCTION FOR BUTTON 3------//
+
+//------FUNCTION FOR BUTTON 3------//
