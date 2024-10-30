@@ -16,7 +16,6 @@
       <div class="pag-section">
         <h2>PAG Matrix</h2>
         <input type="file" id="pagCsvFileInput" accept=".csv" />
-        <button id="pagInitializeButton" class="button">Einlesen</button>
 
         <textarea
           id="pagDotToMatrixOutput"
@@ -27,6 +26,7 @@
         <!-- readonly entfernt -->
 
         <div class="button-container">
+          <button id="pagInitializeButton" class="button">Einlesen</button>
           <button id="pagToDotButton" class="button">Matrix -> DOT</button>
           <button id="dotToMatrixButton" class="button">DOT -> Matrix</button>
         </div>
@@ -69,6 +69,13 @@
               cols="50"
             ></textarea>
           </div>
+        </div>
+
+        <div class="button-container">
+          <button id="admgInitializeButton" class="button">Einlesen</button>
+          <button id="admgMatrixToDotButton" class="button">
+            Matrix -> DOT
+          </button>
         </div>
 
         <textarea

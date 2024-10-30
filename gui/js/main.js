@@ -1,4 +1,8 @@
-//START: EVENT LISTENERS FOR BUTTONS//
+//---------------------------------//
+//--------PAG SECTION START--------//
+//---------------------------------//
+
+//START: EVENT LISTENERS FOR BUTTONS FOR PAG//
 
 //BUTTON 1: const von "Einlesen" button
 const readinButtonForPag = document.getElementById("pagInitializeButton");
@@ -12,11 +16,7 @@ convertPagToDotButton.addEventListener("click", convertEditedMatrixToDot);
 const convertDotToMatrixButton = document.getElementById("dotToMatrixButton");
 convertDotToMatrixButton.addEventListener("click", convertDotToMatrix);
 
-//END: EVENT LISTENERS FOR BUTTONS//
-
-//---------------------------------//
-//--------PAG SECTION START--------//
-//---------------------------------//
+//END: EVENT LISTENERS FOR BUTTONS FOR PAG//
 
 //------FUNCTION FOR BUTTON 1------//
 //Nur für PAG Matrix, andere für ADMG erstellen
@@ -81,6 +81,8 @@ function convertEditedMatrixToDot() {
 
 //----ALLGEMEINE FUNCTION (1&2)----//
 
+//das kann ich doch einfach zu einer function zusammenfügen für PAG und ADMG
+//das ist ja deadass 1:1 das selbe
 //.csv content in angenehmeres Format umwandeln
 function pagParseContent(csvContent) {
   return csvContent
@@ -113,7 +115,7 @@ function convertMatrixToDot(parsedPagMatrix) {
     }
   }
 
-  return `digraph {\n${[...dotEdges].join("\n")}\n}`;
+  return `digraph PAG {\n${[...dotEdges].join("\n")}\n}`;
 }
 
 function pagCreateDotEdges(
@@ -253,3 +255,137 @@ function convertDotToMatrix() {
 //---------PAG SECTION END---------//
 //---------------------------------//
 
+//---------------------------------------------------------------//
+
+//---------------------------------------------------------------//
+
+//---------------------------------//
+//-------ADMG SECTION START--------//
+//---------------------------------//
+
+//START: EVENT LISTENERS FOR BUTTONS FOR ADMG//
+
+const readinButtonForAdmg = document.getElementById("admgInitializeButton");
+readinButtonForAdmg.addEventListener("click", admgFileUpload);
+
+//END: EVENT LISTENERS FOR BUTTONS FOR ADMG//
+
+//------FUNCTION FOR BUTTON 1------//
+
+function admgFileUpload() {
+  const bidirectionalFile = document.getElementById("admgBidirectionalCsvInput")
+    .files[0];
+  const directedFile = document.getElementById("admgDirectedCsvInput").files[0];
+
+  if (bidirectionalFile && directedFile) {
+    admgFileReader(
+      bidirectionalFile,
+      initializeAdmgConversion,
+      "bidirectional"
+    );
+    admgFileReader(directedFile, initializeAdmgConversion, "directed");
+  } else {
+    //TODO: bei PAG falls keine eingabe auch alert werfen
+    alert("Bitte beide CSV-Dateien auswählen (gerichtet und bidirektional).");
+  }
+}
+
+//könnte man auch refactorn und doch einen bauen der für PAG und ADMG funktioniert
+//man müsste einfach nur bei der aufrufenden funktion für den PAG nen neuen typ
+//"pag" erstellen und könnte weiterhin damit arbeiten, processFunction dann
+//halt auch entsprechend anpassen
+function admgFileReader(file, processFunction, type) {
+  const fr = new FileReader();
+  fr.onload = function (event) {
+    const fileContent = event.target.result;
+    processFunction(fileContent, type);
+  };
+  fr.readAsText(file);
+}
+
+function initializeAdmgConversion(csvContent, type) {
+  const parsedMatrix = parseAdmgContent(csvContent);
+
+  if (type === "bidirectional") {
+    document.getElementById("admgBidirectionalMatrixOutput").value =
+      formatMatrix(parsedMatrix);
+  } else if (type === "directed") {
+    document.getElementById("admgDirectedMatrixOutput").value =
+      formatMatrix(parsedMatrix);
+  }
+
+  //Converting both matrices to DOT syntax
+  const bidirectionalMatrix = parseAdmgContent(
+    document.getElementById("admgBidirectionalMatrixOutput").value
+  );
+  const directedMatrix = parseAdmgContent(
+    document.getElementById("admgDirectedMatrixOutput").value
+  );
+
+  const dotGraph = convertAdmgToDot(bidirectionalMatrix, directedMatrix);
+  document.getElementById("admgDotOutput").value = dotGraph;
+}
+
+//das kann ich doch einfach zu einer function zusammenfügen für PAG und ADMG
+//das ist ja deadass 1:1 das selbe
+function parseAdmgContent(csvContent) {
+  return csvContent
+    .trim()
+    .split("\n")
+    .map((row) => row.split(","));
+}
+
+//das ist doch auch 1:1 das selbe oder?
+function formatMatrix(parsedMatrix) {
+  return parsedMatrix.map((row) => row.join(", ")).join("\n");
+}
+
+//TODO: Errorcase einbauen, falls z.B. in directional matrix (A,B)=(B,A)=1 auftritt
+//TODO: BidirectionalEdges überschreiben aktuell die directional edges
+//stattdessen wollen wir aber natürlich bei ADMGs zwsichen zwei knoten
+//eine directed edge sowie eine bidirected edge haben können.
+function convertAdmgToDot(bidirectionalMatrix, directedMatrix) {
+  const knoten = bidirectionalMatrix[0].slice(1);
+  const dotEdges = new Set();
+
+  for (let i = 1; i < bidirectionalMatrix.length; i++) {
+    const quellKnoten = bidirectionalMatrix[i][0];
+
+    for (let j = 1; j < bidirectionalMatrix[i].length; j++) {
+      if (i < j) {
+        const zielKnoten = knoten[j - 1];
+        const bidirectionalEdge = parseInt(bidirectionalMatrix[i][j]);
+        const reverseBidirectionalEdge = parseInt(bidirectionalMatrix[j][i]);
+        const directedEdge = parseInt(directedMatrix[i][j]);
+        const reverseDirectedEdge = parseInt(directedMatrix[j][i]);
+
+        //1. bidirected edge zwischen A und B
+        if (bidirectionalEdge === 2 && reverseBidirectionalEdge === 2) {
+          dotEdges.add(
+            `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=normal, style=dashed];`
+          );
+        }
+        //2. directed edge von A nach B
+        if (directedEdge === 1 && reverseDirectedEdge === 0) {
+          dotEdges.add(
+            `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=none];`
+          );
+        }
+        //3. directed edge von B nach A
+        if (directedEdge === 0 && reverseDirectedEdge === 1) {
+          dotEdges.add(
+            `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=normal];`
+          );
+        }
+      }
+    }
+  }
+
+  return `digraph ADMG {\n${[...dotEdges].join("\n")}\n}`;
+}
+
+//------FUNCTION FOR BUTTON 1------//
+
+//------FUNCTION FOR BUTTON 2------//
+
+//------FUNCTION FOR BUTTON 2------//
