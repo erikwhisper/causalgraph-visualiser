@@ -265,8 +265,13 @@ function convertDotToMatrix() {
 
 //START: EVENT LISTENERS FOR BUTTONS FOR ADMG//
 
+//BUTTON 1: initale einlese, ausgabe und übersetzung
 const readinButtonForAdmg = document.getElementById("admgInitializeButton");
 readinButtonForAdmg.addEventListener("click", admgFileUpload);
+
+//BUTTON 2: textarea zu dot, nach änderung
+const admgMatrixToDotButton = document.getElementById("admgMatrixToDotButton");
+admgMatrixToDotButton.addEventListener("click", admgMatrixToDotConversion);
 
 //END: EVENT LISTENERS FOR BUTTONS FOR ADMG//
 
@@ -387,5 +392,19 @@ function convertAdmgToDot(bidirectionalMatrix, directedMatrix) {
 //------FUNCTION FOR BUTTON 1------//
 
 //------FUNCTION FOR BUTTON 2------//
+
+//liest matrix aus textareas ein
+function admgMatrixToDotConversion() {
+  const bidirectionalMatrix = parseAdmgContent(
+    document.getElementById("admgBidirectionalMatrixOutput").value
+  );
+  const directedMatrix = parseAdmgContent(
+    document.getElementById("admgDirectedMatrixOutput").value
+  );
+
+  const dotGraph = convertAdmgToDot(bidirectionalMatrix, directedMatrix);
+
+  document.getElementById("admgDotOutput").value = dotGraph;
+}
 
 //------FUNCTION FOR BUTTON 2------//
