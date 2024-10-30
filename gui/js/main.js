@@ -277,10 +277,6 @@ admgMatrixToDotButton.addEventListener("click", admgMatrixToDotConversion);
 const dotToMatricesButton = document.getElementById("admgDotToMatrixButton");
 dotToMatricesButton.addEventListener("click", admgDotToMatricesConversion);
 
-function admgDotToMatricesConversion() {
-  /*to be implemented, kb mehr*/
-}
-
 //END: EVENT LISTENERS FOR BUTTONS FOR ADMG//
 
 //------FUNCTION FOR BUTTON 1------//
@@ -418,5 +414,11 @@ function admgMatrixToDotConversion() {
 //------FUNCTION FOR BUTTON 2------//
 
 //------FUNCTION FOR BUTTON 3------//
+
+function admgDotToMatricesConversion() {
+  // Testen, ob auf die Textarea-Felder zugegriffen werden kann
+  document.getElementById("admgDirectedMatrixOutput").value = "hallo";
+  document.getElementById("admgBidirectionalMatrixOutput").value = "hallo";
+}
 
 //------FUNCTION FOR BUTTON 3------//
