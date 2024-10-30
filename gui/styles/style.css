@@ -47,6 +47,10 @@ h2 {
   margin: 0px;
 }
 
+h3 {
+  margin: 0px;
+}
+
 input[type="file"] {
   margin-bottom: 10px;
 }
@@ -80,4 +84,16 @@ textarea {
 .button:active {
   background-color: grey;
   color: green;
+}
+
+.admg-input-group {
+  display: flex;
+  gap: 20px;
+}
+
+.admg-input-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 47%;
 }

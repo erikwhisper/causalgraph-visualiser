@@ -12,6 +12,7 @@
     <div class="container">
       <!--<h1>CSV zu DOT</h1>-->
 
+      <!--PAG Section START-->
       <div class="pag-section">
         <h2>PAG Matrix</h2>
         <input type="file" id="pagCsvFileInput" accept=".csv" />
@@ -40,17 +41,44 @@
         ></textarea>
         <!-- readonly entfernt -->
       </div>
+      <!--PAG Section END-->
 
-      <!-- Neuer Bereich für AMDG Matrix -->
+      <!--ADMG SECTION START-->
       <div class="admg-section">
-        <h2>AMDG Matrix</h2>
+        <h3>AMDG Matrix</h3>
+
+        <div class="admg-input-group">
+          <div class="admg-input-item">
+            <!--<label>Bidirectional Matrix (dashed edges):</label>-->
+            <input type="file" id="admgBidirectionalCsvInput" accept=".csv" />
+            <textarea
+              id="admgBidirectionalMatrixOutput"
+              placeholder="Bidirectional Matrix wird hier angezeigt..."
+              rows="10"
+              cols="50"
+            ></textarea>
+          </div>
+
+          <div class="admg-input-item">
+            <!--<label>Directed Matrix (directed edges):</label>-->
+            <input type="file" id="admgDirectedCsvInput" accept=".csv" />
+            <textarea
+              id="admgDirectedMatrixOutput"
+              placeholder="Directed Matrix wird hier angezeigt..."
+              rows="10"
+              cols="50"
+            ></textarea>
+          </div>
+        </div>
+
         <textarea
-          id="admgMatrixOutput"
-          placeholder="ADMG Matrix wird hier angezeigt..."
+          id="admgDotOutput"
+          placeholder="DOT-Syntax erscheint hier..."
           rows="10"
           cols="50"
         ></textarea>
       </div>
+      <!--ADMG SECTION END-->
     </div>
 
     <script src="../js/main.js"></script>
