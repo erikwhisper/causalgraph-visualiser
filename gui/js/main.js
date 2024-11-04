@@ -420,8 +420,13 @@ function admgMatrixToDotConversion() {
 function admgDotToMatricesConversion() {
   const dotSyntax = document.getElementById("admgDotOutput").value;
 
+  //Im Knoten array werden die Knoten für die weiteren Arbeitsschritte gespeichert
   const knoten = [];
+  /*Das knotenSet ist als einfache Filter-Funktion implementiert, damit
+    jeder Knoten nur einmal vorkommt, da ein Knoten ja als Quellknoten
+    und zusätzlich noch als Zielknoten vorkommen kann*/ 
   const knotenSet = new Set();
+
   const kantenPatternRegEx = /"(\w+)"\s*->\s*"(\w+)"\s*\[(.*?)\]/g;
   let match;
 
@@ -429,7 +434,9 @@ function admgDotToMatricesConversion() {
     const quellKnoten = match[1];
     const zielKnoten = match[2];
 
-    //knoten liste hinzufügen wie bei pag
+    //knoten dem array hinzufügen wie bei pag
+    //hier wird auch die knotenreihenfolge bestimmt
+    //TODO: Reihenfolge an Matrix reihenfolge anpassen? notwenig ja/nein?
     if (!knotenSet.has(quellKnoten)) {
       knoten.push(quellKnoten);
       knotenSet.add(quellKnoten);
@@ -449,13 +456,7 @@ function admgDotToMatricesConversion() {
     Array(matrixSize + 1).fill(0)
   );
 
-  //Knotennamen einsetzen
-  //TODO: den teil iwie ändern so das ich mit der orginal matrix arbeite erst
-  //und DANN mit allen neuen knoten am ende, von mir aus in der reihenfolge
-  //in der man sie zum ersten mal einliest who cares
-  //-> bzw einf die knoten reihenfolge übernehmen wie sie AKTUELL
-  //im textarea: admgDirectedCsvInput ist, da admgDirectedCsvInput=bidirectedinput
-  //was die knoten namen angeht.
+  //Knotennamen einsetzen in vorher gesetzter reihenfolge einsetzen
   directedMatrix[0][0] = '""';
   bidirectionalMatrix[0][0] = '""';
   knoten.forEach((knoten, index) => {
@@ -484,11 +485,16 @@ function admgDotToMatricesConversion() {
       bidirectionalMatrix[zielKnotenIndex][quellKnotenIndex] = 2;
     } else {
       //die anderen sind directed
+      //holt sich den wert für arrowhead/tail raus und speichert ihn in variable
       const arrowheadMatch = /arrowhead=(\w+)/.exec(attributeString);
       const arrowtailMatch = /arrowtail=(\w+)/.exec(attributeString);
+      //wenn arrowhead vorhanden speichere Wert 1 sonst none, das selbe für arrowtail
       const arrowheadType = arrowheadMatch ? arrowheadMatch[1] : "none";
       const arrowtailType = arrowtailMatch ? arrowtailMatch[1] : "none";
 
+      //TODO: beide auf 1 haben sollte ja nicht erlaubt sein, frage ist
+      //ob man das enforcen muss mit einer message oder ob man korrekte
+      //eingabe erwarten kann, das mit prof später abklären
       directedMatrix[quellKnotenIndex][zielKnotenIndex] =
         kantenArtenMap[arrowheadType];
       directedMatrix[zielKnotenIndex][quellKnotenIndex] =
