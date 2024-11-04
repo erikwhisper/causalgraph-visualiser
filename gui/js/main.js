@@ -415,10 +415,98 @@ function admgMatrixToDotConversion() {
 
 //------FUNCTION FOR BUTTON 3------//
 
+//TODO: Hierfür fr Tests schreiben sonst katastrophe das zu checken
+//Alle möglichkeiten prüfen und randfälle
 function admgDotToMatricesConversion() {
-  // Testen, ob auf die Textarea-Felder zugegriffen werden kann
-  document.getElementById("admgDirectedMatrixOutput").value = "hallo";
-  document.getElementById("admgBidirectionalMatrixOutput").value = "hallo";
+  const dotSyntax = document.getElementById("admgDotOutput").value;
+
+  const knoten = [];
+  const knotenSet = new Set();
+  const kantenPatternRegEx = /"(\w+)"\s*->\s*"(\w+)"\s*\[(.*?)\]/g;
+  let match;
+
+  while ((match = kantenPatternRegEx.exec(dotSyntax)) !== null) {
+    const quellKnoten = match[1];
+    const zielKnoten = match[2];
+
+    //knoten liste hinzufügen wie bei pag
+    if (!knotenSet.has(quellKnoten)) {
+      knoten.push(quellKnoten);
+      knotenSet.add(quellKnoten);
+    }
+    if (!knotenSet.has(zielKnoten)) {
+      knoten.push(zielKnoten);
+      knotenSet.add(zielKnoten);
+    }
+  }
+
+  //matrix leer initialisieren
+  const matrixSize = knoten.length;
+  const directedMatrix = Array.from({ length: matrixSize + 1 }, () =>
+    Array(matrixSize + 1).fill(0)
+  );
+  const bidirectionalMatrix = Array.from({ length: matrixSize + 1 }, () =>
+    Array(matrixSize + 1).fill(0)
+  );
+
+  //Knotennamen einsetzen
+  //TODO: den teil iwie ändern so das ich mit der orginal matrix arbeite erst
+  //und DANN mit allen neuen knoten am ende, von mir aus in der reihenfolge
+  //in der man sie zum ersten mal einliest who cares
+  //-> bzw einf die knoten reihenfolge übernehmen wie sie AKTUELL
+  //im textarea: admgDirectedCsvInput ist, da admgDirectedCsvInput=bidirectedinput
+  //was die knoten namen angeht.
+  directedMatrix[0][0] = '""';
+  bidirectionalMatrix[0][0] = '""';
+  knoten.forEach((knoten, index) => {
+    directedMatrix[0][index + 1] = `"${knoten}"`;
+    directedMatrix[index + 1][0] = `"${knoten}"`;
+    bidirectionalMatrix[0][index + 1] = `"${knoten}"`;
+    bidirectionalMatrix[index + 1][0] = `"${knoten}"`;
+  });
+
+  //ander machen?
+  const kantenArtenMap = {
+    none: 0,
+    normal: 1,
+  };
+
+  //directed und bidirected edges zur Matrix hinzufügen
+  kantenPatternRegEx.lastIndex = 0;
+  while ((match = kantenPatternRegEx.exec(dotSyntax)) !== null) {
+    const [_, quellKnoten, zielKnoten, attributeString] = match;
+    const quellKnotenIndex = knoten.indexOf(quellKnoten) + 1;
+    const zielKnotenIndex = knoten.indexOf(zielKnoten) + 1;
+
+    //bidirect kanten sind dashed style edges, daher darauf prüfen
+    if (attributeString.includes("style=dashed")) {
+      bidirectionalMatrix[quellKnotenIndex][zielKnotenIndex] = 2;
+      bidirectionalMatrix[zielKnotenIndex][quellKnotenIndex] = 2;
+    } else {
+      //die anderen sind directed
+      const arrowheadMatch = /arrowhead=(\w+)/.exec(attributeString);
+      const arrowtailMatch = /arrowtail=(\w+)/.exec(attributeString);
+      const arrowheadType = arrowheadMatch ? arrowheadMatch[1] : "none";
+      const arrowtailType = arrowtailMatch ? arrowtailMatch[1] : "none";
+
+      directedMatrix[quellKnotenIndex][zielKnotenIndex] =
+        kantenArtenMap[arrowheadType];
+      directedMatrix[zielKnotenIndex][quellKnotenIndex] =
+        kantenArtenMap[arrowtailType];
+    }
+  }
+
+  //ausgabe
+  const directedMatrixCsv = directedMatrix
+    .map((row) => row.join(", "))
+    .join("\n");
+  document.getElementById("admgDirectedMatrixOutput").value = directedMatrixCsv;
+
+  const bidirectionalMatrixCsv = bidirectionalMatrix
+    .map((row) => row.join(", "))
+    .join("\n");
+  document.getElementById("admgBidirectionalMatrixOutput").value =
+    bidirectionalMatrixCsv;
 }
 
 //------FUNCTION FOR BUTTON 3------//
