@@ -39,6 +39,14 @@ body {
   gap: 20px;
 }
 
+#graph-container {
+  width: 30%;
+  height: 600px;
+  border: 3px solid rgb(160, 169, 105);
+  background-color: rgb(238, 241, 219);
+  margin: 20px auto;
+}
+
 h1 {
   margin-bottom: 20px;
 }
