@@ -541,20 +541,20 @@ document
     const jsonData = convertPagDotToJson(dotSyntax);
 
     //visualize in a basic way with d3
-    //visualizeGraphWithD3(jsonData);
+    visualizeGraphWithD3(jsonData);
   });
 
 //END: EVENT LISTENERS FOR BUTTONS FOR VISUALIZATION//
 
 //------FUNCTION FOR BUTTON 1------//
 function convertPagDotToJson(dotSyntax) {
-
   //set für kanten aufgrund der uniqueness
   const knoten = new Set();
   //links sind unsere kanten, so nennt man die in d3 dann später auch
   const links = [];
 
-  const edgeRegex = /"([^"]+)"\s*->\s*"([^"]+)"\s*\[dir=both, arrowhead=([^,]+), arrowtail=([^,]+)\];/g;
+  const edgeRegex =
+    /"([^"]+)"\s*->\s*"([^"]+)"\s*\[dir=both, arrowhead=([^,]+), arrowtail=([^,]+)\];/g;
   let match;
 
   while ((match = edgeRegex.exec(dotSyntax)) !== null) {
@@ -583,8 +583,148 @@ function convertPagDotToJson(dotSyntax) {
   return jsonData;
 }
 
+//nur none und normal edgetypes, aber dynamisch mit kanten
+function visualizeGraphWithD3(jsonData) {
+  //START CANVAS SETUP://
 
+  //clear canvas
+  d3.select("#graph-container").selectAll("*").remove();
 
+  //container maße übernehmen
+  const container = d3.select("#graph-container");
+  const width = container.node().offsetWidth; //container höhe nutzen oder lieber px?
+  const height = 600; //höhe einf an container auch anpassen oder px lassen?
 
+  //d3 svg container erstellen
+  const svg = container
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+  //END CANVAS SETUP://
+
+  //TODO: arrowmarkers needed: normal(head/tail), odot(head/tail), tail(head/tail), "none(head/tail)"
+
+  //arrowmarker (1.1): normal arrowhead
+  svg
+    .append("defs")
+    .append("marker")
+    .attr("id", "normal-head")
+    .attr("viewBox", "0 -5 10 10")
+    .attr("refX", 22) //position abhängig vom knoten kern
+    .attr("refY", 0)
+    .attr("markerWidth", 6)
+    .attr("markerHeight", 6)
+    .attr("orient", "auto") //bei arrowheads nutzt man auto
+    .append("path")
+    .attr("d", "M0,-5L10,0L0,5") //arrowtype shape definition
+    .attr("fill", "black");
+
+  //arrowmarker (1.2): normal arrowtail
+  svg
+    .append("defs")
+    .append("marker")
+    .attr("id", "normal-tail")
+    .attr("viewBox", "0 -5 10 10")
+    .attr("refX", 22) //position abhängig vom knoten kern
+    .attr("refY", 0)
+    .attr("markerWidth", 6)
+    .attr("markerHeight", 6)
+    .attr("orient", "auto-start-reverse") //bei arrowtails nutzt man auto-start-reverse
+    .append("path")
+    .attr("d", "M0,-5L10,0L0,5") //arrowtype shape definition
+    .attr("fill", "red");
+
+  // Create a force simulation
+  const simulation = d3
+    .forceSimulation(jsonData.nodes)
+    .force(
+      "link",
+      d3
+        .forceLink(jsonData.links)
+        .id((d) => d.id)
+        .distance(150)
+    )
+    .force("charge", d3.forceManyBody().strength(-400))
+    .force("center", d3.forceCenter(width / 2, height / 2));
+
+  //links, also unsere edges zum svg hinzufügen
+  const link = svg
+    .selectAll(".link")
+    .data(jsonData.links)
+    .enter()
+    .append("line")
+    .attr("class", "link")
+    .attr("stroke", "#999")
+    .attr("stroke-width", 2)
+    .attr("marker-end", (d) => {
+      //add arrowtype für links mit arrowhead=normal
+      if (d.arrowhead === "normal") {
+        return "url(#normal-head)";
+      }
+      return null;
+    })
+    .attr("marker-start", (d) => {
+      //add arrowtype für links mir arrowtail=normal
+      if (d.arrowtail === "normal") {
+        return "url(#normal-tail)";
+      }
+      return null;
+    });
+
+  //nodes, also unsere knoten zum svg hinzufügen
+  const node = svg
+    .selectAll(".node")
+    .data(jsonData.nodes)
+    .enter()
+    .append("circle")
+    .attr("class", "node")
+    .attr("r", 15)
+    .attr("fill", "blue")
+    .call(
+      d3
+        .drag()
+        .on("start", (event, d) => {
+          if (!event.active) simulation.alphaTarget(0.3).restart();
+          d.fx = d.x;
+          d.fy = d.y;
+        })
+        .on("drag", (event, d) => {
+          d.fx = event.x;
+          d.fy = event.y;
+        })
+        .on("end", (event, d) => {
+          if (!event.active) simulation.alphaTarget(0);
+          d.fx = null;
+          d.fy = null;
+        })
+    );
+
+  //labels, also knotennamen zum svg hinzufügen
+  const labels = svg
+    .selectAll(".label")
+    .data(jsonData.nodes)
+    .enter()
+    .append("text")
+    .attr("class", "label")
+    .attr("text-anchor", "middle")
+    .attr("dy", ".35em")
+    .text((d) => d.id)
+    .attr("fill", "white")
+    .style("pointer-events", "none");
+
+  //positionen immer updaten
+  simulation.on("tick", () => {
+    link
+      .attr("x1", (d) => d.source.x)
+      .attr("y1", (d) => d.source.y)
+      .attr("x2", (d) => d.target.x)
+      .attr("y2", (d) => d.target.y);
+
+    node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
+
+    labels.attr("x", (d) => d.x).attr("y", (d) => d.y);
+  });
+}
 
 //------FUNCTION FOR BUTTON 1------//
