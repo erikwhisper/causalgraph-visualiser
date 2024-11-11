@@ -424,7 +424,7 @@ function admgDotToMatricesConversion() {
   const knoten = [];
   /*Das knotenSet ist als einfache Filter-Funktion implementiert, damit
     jeder Knoten nur einmal vorkommt, da ein Knoten ja als Quellknoten
-    und zusätzlich noch als Zielknoten vorkommen kann*/ 
+    und zusätzlich noch als Zielknoten vorkommen kann*/
   const knotenSet = new Set();
 
   const kantenPatternRegEx = /"(\w+)"\s*->\s*"(\w+)"\s*\[(.*?)\]/g;
@@ -528,3 +528,63 @@ function admgDotToMatricesConversion() {
 //---------------------------------//
 //-------VISUAL SECTION START------//
 //---------------------------------//
+
+//START: EVENT LISTENERS FOR BUTTONS FOR VISUALIZATION//
+
+//BUTTON 1: dot in json umwandeln -> anschließend visualisieren mit d3
+document
+  .getElementById("pagDotVisualizationButton")
+  .addEventListener("click", function () {
+    const dotSyntax = document.getElementById("pagMatrixToDotOutput").value;
+
+    //convert dot language into d3 readable json
+    const jsonData = convertPagDotToJson(dotSyntax);
+
+    //visualize in a basic way with d3
+    //visualizeGraphWithD3(jsonData);
+  });
+
+//END: EVENT LISTENERS FOR BUTTONS FOR VISUALIZATION//
+
+//------FUNCTION FOR BUTTON 1------//
+function convertPagDotToJson(dotSyntax) {
+
+  //set für kanten aufgrund der uniqueness
+  const knoten = new Set();
+  //links sind unsere kanten, so nennt man die in d3 dann später auch
+  const links = [];
+
+  const edgeRegex = /"([^"]+)"\s*->\s*"([^"]+)"\s*\[dir=both, arrowhead=([^,]+), arrowtail=([^,]+)\];/g;
+  let match;
+
+  while ((match = edgeRegex.exec(dotSyntax)) !== null) {
+    const source = match[1];
+    const target = match[2];
+    const arrowhead = match[3].trim();
+    const arrowtail = match[4].trim();
+
+    knoten.add(source);
+    knoten.add(target);
+
+    links.push({ source, target, arrowhead, arrowtail });
+  }
+
+  const nodesArray = Array.from(knoten).map((node) => ({ id: node }));
+
+  const jsonData = {
+    nodes: nodesArray,
+    links: links,
+  };
+
+  //überprüfen ob json in richtigem format
+  //const jsonDataString = JSON.stringify(jsonData, null, 2);
+  //document.getElementById("dotToMatrixButton").value = jsonDataString;
+
+  return jsonData;
+}
+
+
+
+
+
+//------FUNCTION FOR BUTTON 1------//
