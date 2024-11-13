@@ -529,6 +529,11 @@ function admgDotToMatricesConversion() {
 //-------VISUAL SECTION START------//
 //---------------------------------//
 
+//ARTEN VON SIMULATIONEN: 1. Kraftbasiert, 2. Tree
+//TBH, beides einf implementieren und den nutzer dann auswählen lassen können oder?
+//aber so ne feste tree struktur is iwie auch nicht so geil um sachen zu adden oder?
+//idk ja, weil dann muss ich die hierachie dann ja auch notfalls ändern
+
 //START: EVENT LISTENERS FOR BUTTONS FOR VISUALIZATION//
 
 //BUTTON 1: dot in json umwandeln -> anschließend visualisieren mit d3
@@ -635,7 +640,45 @@ function visualizeGraphWithD3(jsonData) {
     .attr("d", "M0,-5L10,0L0,5") //arrowtype shape definition
     .attr("fill", "red");
 
-  // Create a force simulation
+  //arrowmarker (1.1): odot arrowhead
+  svg
+    .append("defs")
+    .append("marker")
+    .attr("id", "odot-head")
+    .attr("viewBox", "0 -5 10 10")
+    .attr("refX", 22)
+    .attr("refY", 0)
+    .attr("markerWidth", 6)
+    .attr("markerHeight", 6)
+    .attr("orient", "auto")
+    .append("circle") 
+    .attr("cx", 5)
+    .attr("cy", 0)
+    .attr("r", 4)
+    .attr("fill", "rgb(238, 241, 219)")
+    .attr("stroke", "black") 
+    .attr("stroke-width", 2); 
+
+  //arrowmarker (1.2): odot arrowtail
+  svg
+    .append("defs")
+    .append("marker")
+    .attr("id", "odot-tail")
+    .attr("viewBox", "0 -5 10 10")
+    .attr("refX", 22)
+    .attr("refY", 0)
+    .attr("markerWidth", 6)
+    .attr("markerHeight", 6)
+    .attr("orient", "auto-start-reverse")
+    .append("circle")
+    .attr("cx", 5)
+    .attr("cy", 0)
+    .attr("r", 4)
+    .attr("fill", "rgb(238, 241, 219)")
+    .attr("stroke", "red")
+    .attr("stroke-width", 2);
+
+  //create a force simulation
   const simulation = d3
     .forceSimulation(jsonData.nodes)
     .force(
@@ -668,6 +711,22 @@ function visualizeGraphWithD3(jsonData) {
       //add arrowtype für links mir arrowtail=normal
       if (d.arrowtail === "normal") {
         return "url(#normal-tail)";
+      }
+      return null;
+    })
+    .attr("marker-end", (d) => {
+      if (d.arrowhead === "normal") {
+        return "url(#normal-head)";
+      } else if (d.arrowhead === "odot") {
+        return "url(#odot-head)";
+      }
+      return null;
+    })
+    .attr("marker-start", (d) => {
+      if (d.arrowtail === "normal") {
+        return "url(#normal-tail)";
+      } else if (d.arrowtail === "odot") {
+        return "url(#odot-tail)";
       }
       return null;
     });
