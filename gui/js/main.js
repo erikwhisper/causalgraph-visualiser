@@ -536,7 +536,7 @@ function admgDotToMatricesConversion() {
 
 //START: EVENT LISTENERS FOR BUTTONS FOR VISUALIZATION//
 
-//BUTTON 1: dot in json umwandeln -> anschließend visualisieren mit d3
+//BUTTON 1: dot in json umwandeln -> anschließend visualisieren mit d3 (PAG)
 document
   .getElementById("pagDotVisualizationButton")
   .addEventListener("click", function () {
@@ -547,6 +547,19 @@ document
 
     //visualize in a basic way with d3
     visualizeGraphWithD3(jsonData);
+  });
+
+//BUTTON 2: dot in json umwandeln -> anschließend visualisieren mit d3 (ADMG)
+document
+  .getElementById("admgDotVisualizationButton")
+  .addEventListener("click", function () {
+    const dotSyntax = document.getElementById("admgDotOutput").value;
+
+    // Konvertiere DOT-Syntax in ein JSON-Format, das D3.js versteht
+    //const jsonData = convertAdmgDotToJson(dotSyntax);
+
+    // Visualisiere die Daten mit D3.js
+    //visualizeAdmgGraphWithD3(jsonData);
   });
 
 //END: EVENT LISTENERS FOR BUTTONS FOR VISUALIZATION//
@@ -583,7 +596,7 @@ function convertPagDotToJson(dotSyntax) {
 
   //überprüfen ob json in richtigem format
   //const jsonDataString = JSON.stringify(jsonData, null, 2);
-  //document.getElementById("dotToMatrixButton").value = jsonDataString;
+  //document.getElementById("pagMatrixToDotOutput").value = jsonDataString;
 
   return jsonData;
 }
@@ -592,23 +605,19 @@ function convertPagDotToJson(dotSyntax) {
 function visualizeGraphWithD3(jsonData) {
   //START CANVAS SETUP://
 
-  //clear canvas
-  d3.select("#graph-container").selectAll("*").remove();
+  const containerId = "#graph-container";
+  const width = d3.select(containerId).node().offsetWidth;
+  const height = 600;
 
-  //container maße übernehmen
-  const container = d3.select("#graph-container");
-  const width = container.node().offsetWidth; //container höhe nutzen oder lieber px?
-  const height = 600; //höhe einf an container auch anpassen oder px lassen?
-
-  //d3 svg container erstellen
-  const svg = container
-    .append("svg")
-    .attr("width", width)
-    .attr("height", height);
+  // Set up the canvas using the helper function
+  const { svg, g } = createSvgCanvas(containerId, width, height);
 
   //END CANVAS SETUP://
 
   //TODO: arrowmarkers needed: normal(head/tail), odot(head/tail), tail(head/tail), "none(head/tail)"
+  //TODO: edge-länge und node-radius abhängig von der menge an knoten machen,
+  //dabei beachten das dann auch die arrowtypen variablen als parameter brauchen, damit sie
+  //am knoten korrekt abgebildet werden
 
   //arrowmarker (1.1): normal arrowhead
   svg
@@ -651,13 +660,13 @@ function visualizeGraphWithD3(jsonData) {
     .attr("markerWidth", 6)
     .attr("markerHeight", 6)
     .attr("orient", "auto")
-    .append("circle") 
+    .append("circle")
     .attr("cx", 5)
     .attr("cy", 0)
     .attr("r", 4)
     .attr("fill", "rgb(238, 241, 219)")
-    .attr("stroke", "black") 
-    .attr("stroke-width", 2); 
+    .attr("stroke", "black")
+    .attr("stroke-width", 2);
 
   //arrowmarker (1.2): odot arrowtail
   svg
@@ -679,20 +688,15 @@ function visualizeGraphWithD3(jsonData) {
     .attr("stroke-width", 2);
 
   //create a force simulation
-  const simulation = d3
-    .forceSimulation(jsonData.nodes)
-    .force(
-      "link",
-      d3
-        .forceLink(jsonData.links)
-        .id((d) => d.id)
-        .distance(150)
-    )
-    .force("charge", d3.forceManyBody().strength(-400))
-    .force("center", d3.forceCenter(width / 2, height / 2));
+  const simulation = setupForceSimulation(
+    jsonData.nodes,
+    jsonData.links,
+    width,
+    height
+  );
 
   //links, also unsere edges zum svg hinzufügen
-  const link = svg
+  const link = g
     .selectAll(".link")
     .data(jsonData.links)
     .enter()
@@ -732,7 +736,7 @@ function visualizeGraphWithD3(jsonData) {
     });
 
   //nodes, also unsere knoten zum svg hinzufügen
-  const node = svg
+  const node = g
     .selectAll(".node")
     .data(jsonData.nodes)
     .enter()
@@ -760,7 +764,7 @@ function visualizeGraphWithD3(jsonData) {
     );
 
   //labels, also knotennamen zum svg hinzufügen
-  const labels = svg
+  const labels = g
     .selectAll(".label")
     .data(jsonData.nodes)
     .enter()
@@ -787,3 +791,50 @@ function visualizeGraphWithD3(jsonData) {
 }
 
 //------FUNCTION FOR BUTTON 1------//
+
+//------FUNCTION FOR BUTTON 1 AND 2------//
+
+function createSvgCanvas(containerId, width, height) {
+  //clear container
+  d3.select(containerId).selectAll("*").remove();
+
+  //svg element erstelllen
+  const container = d3.select(containerId);
+  const svg = container
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+  //everything in g is now zoomable, knotem, kanten, labels
+  const g = svg.append("g");
+
+  //zoom behavior
+  const zoom = d3
+    .zoom()
+    .on("zoom", (event) => g.attr("transform", event.transform));
+  svg.call(zoom);
+
+  return { svg, g };
+}
+
+function setupForceSimulation(nodes, links, width, height) {
+  return d3
+    .forceSimulation(nodes)
+    .force(
+      "link",
+      d3
+        .forceLink(links)
+        .id((d) => d.id)
+        .distance(150)
+    )
+    .force("charge", d3.forceManyBody().strength(-400))
+    .force("center", d3.forceCenter(width / 2, height / 2));
+}
+
+//------FUNCTION FOR BUTTON 1 AND 2------//
+
+//------FUNCTION FOR BUTTON 2------//
+
+
+
+//------FUNCTION FOR BUTTON 2------//
