@@ -2,6 +2,8 @@
 //--------PAG SECTION START--------//
 //---------------------------------//
 
+//TODO: Es fehlt noch der basic ass .txt readin neben dem .csv readin bruh
+
 //START: EVENT LISTENERS FOR BUTTONS FOR PAG//
 
 //BUTTON 1: const von "Einlesen" button
@@ -556,7 +558,7 @@ document
     const dotSyntax = document.getElementById("admgDotOutput").value;
 
     // Konvertiere DOT-Syntax in ein JSON-Format, das D3.js versteht
-    //const jsonData = convertAdmgDotToJson(dotSyntax);
+    const jsonData = convertAdmgDotToJson(dotSyntax);
 
     // Visualisiere die Daten mit D3.js
     //visualizeAdmgGraphWithD3(jsonData);
@@ -604,88 +606,47 @@ function convertPagDotToJson(dotSyntax) {
 //nur none und normal edgetypes, aber dynamisch mit kanten
 function visualizeGraphWithD3(jsonData) {
   //START CANVAS SETUP://
-
   const containerId = "#graph-container";
   const width = d3.select(containerId).node().offsetWidth;
   const height = 600;
-
-  // Set up the canvas using the helper function
   const { svg, g } = createSvgCanvas(containerId, width, height);
-
   //END CANVAS SETUP://
 
-  //TODO: arrowmarkers needed: normal(head/tail), odot(head/tail), tail(head/tail), "none(head/tail)"
   //TODO: edge-länge und node-radius abhängig von der menge an knoten machen,
   //dabei beachten das dann auch die arrowtypen variablen als parameter brauchen, damit sie
   //am knoten korrekt abgebildet werden
 
-  //arrowmarker (1.1): normal arrowhead
-  svg
-    .append("defs")
-    .append("marker")
-    .attr("id", "normal-head")
-    .attr("viewBox", "0 -5 10 10")
-    .attr("refX", 22) //position abhängig vom knoten kern
-    .attr("refY", 0)
-    .attr("markerWidth", 6)
-    .attr("markerHeight", 6)
-    .attr("orient", "auto") //bei arrowheads nutzt man auto
-    .append("path")
-    .attr("d", "M0,-5L10,0L0,5") //arrowtype shape definition
-    .attr("fill", "black");
+  //TODO: Als USER die kantenlänge einstellen können, einmal mit einem wert für alle kanten
+  //und dann kann man doch bestimmt auch iwie einzelne kanten individuell anwählen
+  //und deren länge dann anpassen
 
-  //arrowmarker (1.2): normal arrowtail
-  svg
-    .append("defs")
-    .append("marker")
-    .attr("id", "normal-tail")
-    .attr("viewBox", "0 -5 10 10")
-    .attr("refX", 22) //position abhängig vom knoten kern
-    .attr("refY", 0)
-    .attr("markerWidth", 6)
-    .attr("markerHeight", 6)
-    .attr("orient", "auto-start-reverse") //bei arrowtails nutzt man auto-start-reverse
-    .append("path")
-    .attr("d", "M0,-5L10,0L0,5") //arrowtype shape definition
-    .attr("fill", "red");
-
-  //arrowmarker (1.1): odot arrowhead
-  svg
-    .append("defs")
-    .append("marker")
-    .attr("id", "odot-head")
-    .attr("viewBox", "0 -5 10 10")
-    .attr("refX", 22)
-    .attr("refY", 0)
-    .attr("markerWidth", 6)
-    .attr("markerHeight", 6)
-    .attr("orient", "auto")
-    .append("circle")
-    .attr("cx", 5)
-    .attr("cy", 0)
-    .attr("r", 4)
-    .attr("fill", "rgb(238, 241, 219)")
-    .attr("stroke", "black")
-    .attr("stroke-width", 2);
-
-  //arrowmarker (1.2): odot arrowtail
-  svg
-    .append("defs")
-    .append("marker")
-    .attr("id", "odot-tail")
-    .attr("viewBox", "0 -5 10 10")
-    .attr("refX", 22)
-    .attr("refY", 0)
-    .attr("markerWidth", 6)
-    .attr("markerHeight", 6)
-    .attr("orient", "auto-start-reverse")
-    .append("circle")
-    .attr("cx", 5)
-    .attr("cy", 0)
-    .attr("r", 4)
-    .attr("fill", "rgb(238, 241, 219)")
-    .attr("stroke", "red")
-    .attr("stroke-width", 2);
+  setupArrowMarker(svg, "normal-head", "path", "black", null, "auto");
+  setupArrowMarker(
+    svg,
+    "normal-tail",
+    "path",
+    "red",
+    null,
+    "auto-start-reverse"
+  );
+  setupArrowMarker(
+    svg,
+    "odot-head",
+    "circle",
+    "rgb(238, 241, 219)",
+    "black",
+    "auto"
+  );
+  setupArrowMarker(
+    svg,
+    "odot-tail",
+    "circle",
+    "rgb(238, 241, 219)",
+    "red",
+    "auto-start-reverse"
+  );
+  setupArrowMarker(svg, "tail-head", "rect", "black", null, "auto");
+  setupArrowMarker(svg, "tail-tail", "rect", "red", null, "auto-start-reverse");
 
   //create a force simulation
   const simulation = setupForceSimulation(
@@ -705,24 +666,12 @@ function visualizeGraphWithD3(jsonData) {
     .attr("stroke", "#999")
     .attr("stroke-width", 2)
     .attr("marker-end", (d) => {
-      //add arrowtype für links mit arrowhead=normal
-      if (d.arrowhead === "normal") {
-        return "url(#normal-head)";
-      }
-      return null;
-    })
-    .attr("marker-start", (d) => {
-      //add arrowtype für links mir arrowtail=normal
-      if (d.arrowtail === "normal") {
-        return "url(#normal-tail)";
-      }
-      return null;
-    })
-    .attr("marker-end", (d) => {
       if (d.arrowhead === "normal") {
         return "url(#normal-head)";
       } else if (d.arrowhead === "odot") {
         return "url(#odot-head)";
+      } else if (d.arrowhead === "tail") {
+        return "url(#tail-head)";
       }
       return null;
     })
@@ -731,6 +680,8 @@ function visualizeGraphWithD3(jsonData) {
         return "url(#normal-tail)";
       } else if (d.arrowtail === "odot") {
         return "url(#odot-tail)";
+      } else if (d.arrowtail === "tail") {
+        return "url(#tail-tail)";
       }
       return null;
     });
@@ -777,17 +728,7 @@ function visualizeGraphWithD3(jsonData) {
     .style("pointer-events", "none");
 
   //positionen immer updaten
-  simulation.on("tick", () => {
-    link
-      .attr("x1", (d) => d.source.x)
-      .attr("y1", (d) => d.source.y)
-      .attr("x2", (d) => d.target.x)
-      .attr("y2", (d) => d.target.y);
-
-    node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
-
-    labels.attr("x", (d) => d.x).attr("y", (d) => d.y);
-  });
+  simulation.on("tick", tickHandler(link, node, labels));
 }
 
 //------FUNCTION FOR BUTTON 1------//
@@ -831,10 +772,128 @@ function setupForceSimulation(nodes, links, width, height) {
     .force("center", d3.forceCenter(width / 2, height / 2));
 }
 
+function tickHandler(link, node, labels) {
+  return () => {
+    link
+      .attr("x1", (d) => d.source.x)
+      .attr("y1", (d) => d.source.y)
+      .attr("x2", (d) => d.target.x)
+      .attr("y2", (d) => d.target.y);
+
+    node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
+
+    labels.attr("x", (d) => d.x).attr("y", (d) => d.y);
+  };
+}
+
+function setupArrowMarker(svg, id, shape, fillColor, strokeColor, orient) {
+  //arrowmarker (0.1): none arrowhead //falls kein marker vorhanden -> null bzw. in Matrix 0.
+  //arrowmarker (0.2): none arrowtail //falls kein marker vorhanden -> null bzw. in Matrix 0.
+  //arrowmarker (1.1): normal arrowhead
+  //arrowmarker (1.2): normal arrowtail
+  //arrowmarker (2.1): odot arrowhead
+  //arrowmarker (2.2): odot arrowtail
+  //arrowmarker (3.1): tail arrowhead //später unsichtbar machen
+  //arrowmarker (3.2): tail arrowtail //später unsichtbar machen
+  const marker = svg
+    .append("defs")
+    .append("marker")
+    .attr("id", id)
+    .attr("viewBox", "0 -5 10 10")
+    .attr("refX", 22)
+    .attr("refY", 0)
+    .attr("markerWidth", 6)
+    .attr("markerHeight", 6)
+    .attr("orient", orient);
+
+  if (shape === "path") {
+    marker.append("path").attr("d", "M0,-5L10,0L0,5").attr("fill", fillColor);
+  } else if (shape === "circle") {
+    marker
+      .append("circle")
+      .attr("cx", 5)
+      .attr("cy", 0)
+      .attr("r", 4)
+      .attr("fill", fillColor)
+      .attr("stroke", strokeColor)
+      .attr("stroke-width", 2);
+  } else if (shape === "rect") {
+    marker
+      .append("rect")
+      .attr("x", 0)
+      .attr("y", -5)
+      .attr("width", 10)
+      .attr("height", 10)
+      .attr("fill", fillColor);
+  }
+}
+
 //------FUNCTION FOR BUTTON 1 AND 2------//
 
 //------FUNCTION FOR BUTTON 2------//
 
+function convertAdmgDotToJson(dotSyntax) {
+  const knoten = new Set();
 
+  const links = [];
+
+  const edgeRegex =
+    /"([^"]+)"\s*->\s*"([^"]+)"\s*\[dir=both, arrowhead=([^,]+), arrowtail=([^,]+)(?:, style=dashed)?\];/g;
+  let match;
+
+  while ((match = edgeRegex.exec(dotSyntax)) !== null) {
+    const source = match[1];
+    const target = match[2];
+    const arrowhead = match[3].trim();
+    const arrowtail = match[4].trim();
+    const isDashed = /style=dashed/.test(match[0]);
+
+    knoten.add(source);
+    knoten.add(target);
+
+    if (isDashed) {
+      //bidirected edges
+      links.push({
+        source,
+        target,
+        type: "bidirected-dashed",
+        arrowhead: "normal",
+        arrowtail: "normal",
+      });
+    } else {
+      //directed edges mit richtung
+      if (arrowhead === "normal" && arrowtail === "none") {
+        links.push({
+          source,
+          target,
+          type: "directed",
+          arrowhead: "normal",
+          arrowtail: "none",
+        });
+      } else if (arrowhead === "none" && arrowtail === "normal") {
+        links.push({
+          source,
+          target,
+          type: "directed",
+          arrowhead: "none",
+          arrowtail: "normal",
+        });
+      }
+    }
+  }
+
+  //knoten zu knotenarray
+  const nodesArray = Array.from(knoten).map((node) => ({ id: node }));
+
+  const jsonData = {
+    nodes: nodesArray,
+    links: links,
+  };
+
+  const jsonDataString = JSON.stringify(jsonData, null, 2);
+  document.getElementById("pagMatrixToDotOutput").value = jsonDataString;
+
+  return jsonData;
+}
 
 //------FUNCTION FOR BUTTON 2------//
