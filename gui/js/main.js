@@ -561,7 +561,7 @@ document
     const jsonData = convertAdmgDotToJson(dotSyntax);
 
     // Visualisiere die Daten mit D3.js
-    //visualizeAdmgGraphWithD3(jsonData);
+    visualizeAdmgWithD3(jsonData);
   });
 
 //END: EVENT LISTENERS FOR BUTTONS FOR VISUALIZATION//
@@ -890,10 +890,128 @@ function convertAdmgDotToJson(dotSyntax) {
     links: links,
   };
 
-  const jsonDataString = JSON.stringify(jsonData, null, 2);
-  document.getElementById("pagMatrixToDotOutput").value = jsonDataString;
+  //const jsonDataString = JSON.stringify(jsonData, null, 2);
+  //document.getElementById("pagMatrixToDotOutput").value = jsonDataString;
 
   return jsonData;
 }
 
+function visualizeAdmgWithD3(jsonData) {
+  //canvas setup
+  const containerId = "#graph-container";
+  const width = d3.select(containerId).node().offsetWidth;
+  const height = 600;
+  const { svg, g } = createSvgCanvas(containerId, width, height);
+
+  //setup ADMG arrow markers, with general pag and admg arrowmarker helper-function
+  setupArrowMarker(svg, "admg-normal-head", "path", "black", null, "auto");
+  setupArrowMarker(
+    svg,
+    "admg-normal-tail",
+    "path",
+    "red",
+    null,
+    "auto-start-reverse"
+  );
+
+  //force simulation
+  const simulation = setupForceSimulation(
+    jsonData.nodes,
+    jsonData.links,
+    width,
+    height
+  );
+
+  //add links
+  const link = g
+    .selectAll(".link")
+    .data(jsonData.links)
+    .enter()
+    .append("path") //path is more flexibal than line, maybe change in others, if needed for interactivity
+    .attr("class", "link")
+    .attr("stroke", "#999")
+    .attr("stroke-width", 2)
+    .attr("fill", "none")
+    .attr("stroke-dasharray", (d) =>
+      d.type === "bidirected-dashed" ? "5,5" : ""
+    )
+    .attr("marker-end", (d) => {
+      return d.arrowhead === "normal" ? "url(#admg-normal-head)" : null;
+    })
+    .attr("marker-start", (d) => {
+      return d.arrowtail === "normal" ? "url(#admg-normal-tail)" : null;
+    });
+
+  //add nodes
+  const node = g
+    .selectAll(".node")
+    .data(jsonData.nodes)
+    .enter()
+    .append("circle")
+    .attr("class", "node")
+    .attr("r", 15)
+    .attr("fill", "blue")
+    .call(
+      d3
+        .drag()
+        .on("start", (event, d) => {
+          if (!event.active) simulation.alphaTarget(0.3).restart();
+          d.fx = d.x;
+          d.fy = d.y;
+        })
+        .on("drag", (event, d) => {
+          d.fx = event.x;
+          d.fy = event.y;
+        })
+        .on("end", (event, d) => {
+          if (!event.active) simulation.alphaTarget(0);
+          d.fx = null;
+          d.fy = null;
+        })
+    );
+
+  //add labels
+  const labels = g
+    .selectAll(".label")
+    .data(jsonData.nodes)
+    .enter()
+    .append("text")
+    .attr("class", "label")
+    .attr("text-anchor", "middle")
+    .attr("dy", ".35em")
+    .text((d) => d.id)
+    .attr("fill", "white")
+    .style("pointer-events", "none");
+
+  //simulation is different, because of the curve, maybe helper function maybe not idk yet
+  simulation.on("tick", () => {
+    link.attr("d", (d) => {
+      const dx = d.target.x - d.source.x;
+      const dy = d.target.y - d.source.y;
+      const dr = Math.sqrt(dx * dx + dy * dy); //distanz zwischen zwei nodes
+
+      //curve for bidirected
+      if (d.type === "bidirected-dashed") {
+        return `M${d.source.x},${d.source.y} A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
+      } else {
+        //straight for directed
+        return `M${d.source.x},${d.source.y} L${d.target.x},${d.target.y}`;
+      }
+    });
+
+    node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
+    labels.attr("x", (d) => d.x).attr("y", (d) => d.y);
+  });
+}
+
 //------FUNCTION FOR BUTTON 2------//
+
+
+
+//TODO iwann: gucken wie die initiale visualisierung schöner wird, was für clippings es gibt
+//automatic layouts etc, damit das ganze schöner aussieht, wie bei dagitty oder so
+
+//TODO: Basic interativity einbauen, also per click die farbe von einer edge oder einem knoten
+//ändern können, einen knoten hinzufügen, den namen angeben können, die kante zeichnen können
+//dann die arrowmarker der kante auswählen können und das ganze in dot-syntax übersetzen
+//von da aus kann ich dann ja schon dot->matrix übersetzung machen.
