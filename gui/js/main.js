@@ -766,7 +766,13 @@ function createSvgCanvas(containerId, width, height) {
   const zoom = d3
     .zoom()
     .on("zoom", (event) => g.attr("transform", event.transform));
+
+  //by deafault zoom is enabled  
   svg.call(zoom);
+
+  //EXPERIMENTELL: TOGGELING ZOOM
+  //helperfunction to disable/toggle zoom
+  setupZoomToggle(svg, zoom);
 
   return { svg, g };
 }
@@ -1039,6 +1045,7 @@ function visualizeGraphGridBasedWithD3(jsonData) {
   const height = 600;
   const { svg, g } = createSvgCanvas(containerId, width, height);
 
+  //EXPERIMENTAL: Static GRID:
   setupGridToggle(svg, width, height, 100);
   // END CANVAS SETUP
 
@@ -1171,6 +1178,23 @@ function updateGrid(node, link, labels) {
 //Button for toggeling of the force in the forcesimulation to be able to freely
 //drag and drop something
 
+
+//EXPERIMENTELL: TOGGELING ZOOM
+
+function setupZoomToggle(svg, zoom) {
+  d3.select("#zoom-checkbox").on("change", function () {
+    if (this.checked) {
+      svg.call(zoom); //enable zoom
+    } else {
+      svg.on(".zoom", null); //disable toom
+    }
+  });
+}
+
+//EXPERIMENTELL: TOGGELING ZOOM
+
+//EXPERIMENTELL: GRID, STATIC as of rn
+
 function setupGridToggle(svg, width, height, gridSpacing) {
   d3.select("#grid-checkbox").on("change", function () {
     if (this.checked) {
@@ -1206,3 +1230,15 @@ function drawGrid(svg, width, height, gridSpacing) {
       .attr("stroke-width", 0.5);
   }
 }
+
+//EXPERIMENTELL: GRID, STATIC as of rn
+
+
+//TODO: Snapping algorithmus bissl überarbeiten, anstatt zum nächsten clipped der knoten 
+//immer relativ weit weg for whatever reason
+
+//TODO: Für den ADMG auch die Grid-based visualization adden
+
+//Bei der Force visualization einen checkbox adden um die force auszustellen zum freien moven.
+
+//Bei der Grid veisualization eine checkbox adden um das clippen auszustellen
