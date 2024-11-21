@@ -1184,9 +1184,11 @@ function updateGrid(node, link, labels) {
 function setupZoomToggle(svg, zoom) {
   d3.select("#zoom-checkbox").on("change", function () {
     if (this.checked) {
-      svg.call(zoom); //enable zoom
+      svg.on(".zoom", null);
+       //disable zoom
     } else {
-      svg.on(".zoom", null); //disable toom
+       //enable toom
+       svg.call(zoom);
     }
   });
 }
