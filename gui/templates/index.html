@@ -30,6 +30,7 @@
           <button id="pagToDotButton" class="button">Matrix -> DOT</button>
           <button id="dotToMatrixButton" class="button">DOT -> Matrix</button>
           <button id="pagDotVisualizationButton" class="button">Force-Visualisierung</button>
+          <button id="pagDotGridBasedVisualizationButton" class="button">Grid-Visualisierung</button>
         </div>
         <!--maybe pagToMatrixButton besserer name als dotToMatrixButton?!-->
 
@@ -41,7 +42,15 @@
           cols="50"
         ></textarea>
         <!-- readonly entfernt -->
+        <div id="controls">
+          <label>
+            <input type="checkbox" id="grid-checkbox">
+            Show Grid
+          </label>
+        </div>
+        
       </div>
+      
       <!--PAG Section END-->
 
       <!--VISUAL SECTION START-->

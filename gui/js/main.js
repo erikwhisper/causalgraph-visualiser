@@ -538,7 +538,7 @@ function admgDotToMatricesConversion() {
 
 //START: EVENT LISTENERS FOR BUTTONS FOR VISUALIZATION//
 
-//BUTTON 1: dot in json umwandeln -> anschließend visualisieren mit d3 (PAG)
+//BUTTON 1.1: dot in json umwandeln -> anschließend mit force visualisieren mit d3 (PAG)
 document
   .getElementById("pagDotVisualizationButton")
   .addEventListener("click", function () {
@@ -549,6 +549,19 @@ document
 
     //visualize in a basic way with d3
     visualizeGraphWithD3(jsonData);
+  });
+
+//BUTTON 1.2: dot in json umwandeln -> anschließend mit grid visualisieren mit d3 (PAG)
+document
+  .getElementById("pagDotGridBasedVisualizationButton")
+  .addEventListener("click", function () {
+    const dotSyntax = document.getElementById("pagMatrixToDotOutput").value;
+
+    //convert dot language into d3 readable json
+    const jsonData = convertPagDotToJson(dotSyntax);
+
+    //visualize in a basic way with d3
+    visualizeGraphGridBasedWithD3(jsonData);
   });
 
 //BUTTON 2: dot in json umwandeln -> anschließend visualisieren mit d3 (ADMG)
@@ -1006,8 +1019,6 @@ function visualizeAdmgWithD3(jsonData) {
 
 //------FUNCTION FOR BUTTON 2------//
 
-
-
 //TODO iwann: gucken wie die initiale visualisierung schöner wird, was für clippings es gibt
 //automatic layouts etc, damit das ganze schöner aussieht, wie bei dagitty oder so
 
@@ -1015,3 +1026,183 @@ function visualizeAdmgWithD3(jsonData) {
 //ändern können, einen knoten hinzufügen, den namen angeben können, die kante zeichnen können
 //dann die arrowmarker der kante auswählen können und das ganze in dot-syntax übersetzen
 //von da aus kann ich dann ja schon dot->matrix übersetzung machen.
+
+//visualizeGraphGridBasedWithD3  <- implement this, refine the initial version, add edges correctly
+//add arrowmarkers correctly, add drag and drop, add colission avoidance between nodes and edges
+
+//------FUNCTION FOR BUTTON 1.2------//
+
+function visualizeGraphGridBasedWithD3(jsonData) {
+  // START CANVAS SETUP
+  const containerId = "#graph-container";
+  const width = d3.select(containerId).node().offsetWidth;
+  const height = 600;
+  const { svg, g } = createSvgCanvas(containerId, width, height);
+
+  setupGridToggle(svg, width, height, 100);
+  // END CANVAS SETUP
+
+  setupArrowMarker(svg, "normal-head", "path", "black", null, "auto");
+  setupArrowMarker(
+    svg,
+    "normal-tail",
+    "path",
+    "red",
+    null,
+    "auto-start-reverse"
+  );
+  setupArrowMarker(
+    svg,
+    "odot-head",
+    "circle",
+    "rgb(238, 241, 219)",
+    "black",
+    "auto"
+  );
+  setupArrowMarker(
+    svg,
+    "odot-tail",
+    "circle",
+    "rgb(238, 241, 219)",
+    "red",
+    "auto-start-reverse"
+  );
+  setupArrowMarker(svg, "tail-head", "rect", "black", null, "auto");
+  setupArrowMarker(svg, "tail-tail", "rect", "red", null, "auto-start-reverse");
+
+  jsonData.links.forEach((link) => {
+    link.source = jsonData.nodes.find((node) => node.id === link.source);
+    link.target = jsonData.nodes.find((node) => node.id === link.target);
+  });
+
+  const numColumns = Math.ceil(Math.sqrt(jsonData.nodes.length));
+  const gridSpacing = 100;
+
+  jsonData.nodes.forEach((node, index) => {
+    node.x = (index % numColumns) * gridSpacing + gridSpacing / 2;
+    node.y = Math.floor(index / numColumns) * gridSpacing + gridSpacing / 2;
+  });
+
+  //edges
+  const link = g
+    .selectAll(".link")
+    .data(jsonData.links)
+    .enter()
+    .append("line")
+    .attr("class", "link")
+    .attr("stroke", "#999")
+    .attr("stroke-width", 2)
+    .attr("marker-end", (d) => {
+      if (d.arrowhead === "normal") return "url(#normal-head)";
+      if (d.arrowhead === "odot") return "url(#odot-head)";
+      if (d.arrowhead === "tail") return "url(#tail-head)";
+      return null;
+    })
+    .attr("marker-start", (d) => {
+      if (d.arrowtail === "normal") return "url(#normal-tail)";
+      if (d.arrowtail === "odot") return "url(#odot-tail)";
+      if (d.arrowtail === "tail") return "url(#tail-tail)";
+      return null;
+    })
+    .attr("x1", (d) => d.source.x)
+    .attr("y1", (d) => d.source.y)
+    .attr("x2", (d) => d.target.x)
+    .attr("y2", (d) => d.target.y);
+
+  const node = g
+    .selectAll(".node")
+    .data(jsonData.nodes)
+    .enter()
+    .append("circle")
+    .attr("class", "node")
+    .attr("r", 15)
+    .attr("fill", "blue")
+    .attr("cx", (d) => d.x)
+    .attr("cy", (d) => d.y)
+    .call(
+      d3
+        .drag()
+        .on("drag", (event, d) => {
+          d.x = event.x;
+          d.y = event.y;
+        })
+        .on("end", (event, d) => {
+          // Snap to the nearest grid point
+          d.x = Math.round(d.x / gridSpacing) * gridSpacing + gridSpacing / 2;
+          d.y = Math.round(d.y / gridSpacing) * gridSpacing + gridSpacing / 2;
+        })
+    );
+
+  const labels = g
+    .selectAll(".label")
+    .data(jsonData.nodes)
+    .enter()
+    .append("text")
+    .attr("class", "label")
+    .attr("text-anchor", "middle")
+    .attr("dy", ".35em")
+    .text((d) => d.id)
+    .attr("fill", "white")
+    .attr("x", (d) => d.x)
+    .attr("y", (d) => d.y);
+
+  updateGrid(node, link, labels);
+}
+
+function updateGrid(node, link, labels) {
+  function update() {
+    node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
+
+    link
+      .attr("x1", (d) => d.source.x)
+      .attr("y1", (d) => d.source.y)
+      .attr("x2", (d) => d.target.x)
+      .attr("y2", (d) => d.target.y);
+
+    labels.attr("x", (d) => d.x).attr("y", (d) => d.y);
+
+    requestAnimationFrame(update);
+  }
+  update(); //animation loop
+}
+
+//------FUNCTION FOR BUTTON 1.2------//
+
+//Button for toggeling of the force in the forcesimulation to be able to freely
+//drag and drop something
+
+function setupGridToggle(svg, width, height, gridSpacing) {
+  d3.select("#grid-checkbox").on("change", function () {
+    if (this.checked) {
+      drawGrid(svg, width, height, gridSpacing);
+    } else {
+      svg.select(".grid-lines").remove();
+    }
+  });
+}
+
+function drawGrid(svg, width, height, gridSpacing) {
+  const gridGroup = svg.append("g").attr("class", "grid-lines");
+
+  for (let x = gridSpacing / 2; x <= width; x += gridSpacing) {
+    gridGroup
+      .append("line")
+      .attr("x1", x)
+      .attr("y1", 0)
+      .attr("x2", x)
+      .attr("y2", height)
+      .attr("stroke", "#e0e0e0")
+      .attr("stroke-width", 0.5);
+  }
+
+  for (let y = gridSpacing / 2; y <= height; y += gridSpacing) {
+    gridGroup
+      .append("line")
+      .attr("x1", 0)
+      .attr("y1", y)
+      .attr("x2", width)
+      .attr("y2", y)
+      .attr("stroke", "#e0e0e0")
+      .attr("stroke-width", 0.5);
+  }
+}
