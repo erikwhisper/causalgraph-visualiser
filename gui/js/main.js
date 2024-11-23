@@ -767,7 +767,7 @@ function createSvgCanvas(containerId, width, height) {
     .zoom()
     .on("zoom", (event) => g.attr("transform", event.transform));
 
-  //by deafault zoom is enabled  
+  //by deafault zoom is enabled
   svg.call(zoom);
 
   //EXPERIMENTELL: TOGGELING ZOOM
@@ -1134,9 +1134,12 @@ function visualizeGraphGridBasedWithD3(jsonData) {
           d.y = event.y;
         })
         .on("end", (event, d) => {
-          // Snap to the nearest grid point
-          d.x = Math.round(d.x / gridSpacing) * gridSpacing + gridSpacing / 2;
-          d.y = Math.round(d.y / gridSpacing) * gridSpacing + gridSpacing / 2;
+          d.x =
+            Math.round((d.x - gridSpacing / 2) / gridSpacing) * gridSpacing +
+            gridSpacing / 2;
+          d.y =
+            Math.round((d.y - gridSpacing / 2) / gridSpacing) * gridSpacing +
+            gridSpacing / 2;
         })
     );
 
@@ -1178,17 +1181,16 @@ function updateGrid(node, link, labels) {
 //Button for toggeling of the force in the forcesimulation to be able to freely
 //drag and drop something
 
-
 //EXPERIMENTELL: TOGGELING ZOOM
 
 function setupZoomToggle(svg, zoom) {
   d3.select("#zoom-checkbox").on("change", function () {
     if (this.checked) {
       svg.on(".zoom", null);
-       //disable zoom
+      //disable zoom
     } else {
-       //enable toom
-       svg.call(zoom);
+      //enable toom
+      svg.call(zoom);
     }
   });
 }
@@ -1235,11 +1237,19 @@ function drawGrid(svg, width, height, gridSpacing) {
 
 //EXPERIMENTELL: GRID, STATIC as of rn
 
+//REFACTORN DEN CODE OMG ES SMELLED
 
-//TODO: Snapping algorithmus bissl überarbeiten, anstatt zum nächsten clipped der knoten 
+//TODO: Snapping algorithmus bissl überarbeiten, anstatt zum nächsten clipped der knoten
 //immer relativ weit weg for whatever reason
+//-> Ich klippe immer zu dem nächsten grid punkt der sich rechts/unten von meiner aktuellen
+//position befindet anstatt einfach zum in alle richtungen nächsten snapping punkt
+
+//Eingabe hinzufügen um universal alle knoten und alle kanten zu vergrößern oder zu verkleinern
+//Dann später auch individuelle anpassungen durchführen
 
 //TODO: Für den ADMG auch die Grid-based visualization adden
+
+//TODO: Clear Checkboxes when Grid/Force-Visu button is pressed
 
 //Bei der Force visualization einen checkbox adden um die force auszustellen zum freien moven.
 
