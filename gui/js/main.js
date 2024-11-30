@@ -564,7 +564,7 @@ document
     visualizeGraphGridBasedWithD3(jsonData);
   });
 
-//BUTTON 2: dot in json umwandeln -> anschließend visualisieren mit d3 (ADMG)
+//BUTTON 2.1: dot in json umwandeln -> anschließend visualisieren mit d3 (ADMG)
 document
   .getElementById("admgDotVisualizationButton")
   .addEventListener("click", function () {
@@ -575,6 +575,19 @@ document
 
     // Visualisiere die Daten mit D3.js
     visualizeAdmgWithD3(jsonData);
+  });
+
+//BUTTON 2.2: dot in json umwandeln -> anschließend mit grid visualisieren mit d3 (ADMG)
+document
+  .getElementById("admgDotGridBasedVisualizationButton")
+  .addEventListener("click", function () {
+    const dotSyntax = document.getElementById("admgDotOutput").value;
+
+    // Konvertiere DOT-Syntax in ein JSON-Format, das D3.js versteht
+    const jsonData = convertAdmgDotToJson(dotSyntax);
+
+    // Visualisiere die Daten mit D3.js
+    visualizeAdmgGridBasedWithD3(jsonData);
   });
 
 //END: EVENT LISTENERS FOR BUTTONS FOR VISUALIZATION//
@@ -1038,6 +1051,7 @@ function visualizeAdmgWithD3(jsonData) {
 
 //------FUNCTION FOR BUTTON 1.2------//
 
+//Hier gibts eig nix zum refactorn
 function visualizeGraphGridBasedWithD3(jsonData) {
   // START CANVAS SETUP
   const containerId = "#graph-container";
@@ -1176,6 +1190,125 @@ function updateGrid(node, link, labels) {
   update(); //animation loop
 }
 
+//Hier gibts eig nix zum refactorn
+function visualizeAdmgGridBasedWithD3(jsonData) {
+  const containerId = "#graph-container";
+  const width = d3.select(containerId).node().offsetWidth;
+  const height = 600;
+  const { svg, g } = createSvgCanvas(containerId, width, height);
+
+  setupArrowMarker(svg, "admg-normal-head", "path", "black", null, "auto");
+  setupArrowMarker(
+    svg,
+    "admg-normal-tail",
+    "path",
+    "red",
+    null,
+    "auto-start-reverse"
+  );
+
+  jsonData.links.forEach((link) => {
+    link.source = jsonData.nodes.find((node) => node.id === link.source);
+    link.target = jsonData.nodes.find((node) => node.id === link.target);
+  });
+
+  const numColumns = Math.ceil(Math.sqrt(jsonData.nodes.length));
+  const gridSpacing = 100;
+
+  jsonData.nodes.forEach((node, index) => {
+    node.x = (index % numColumns) * gridSpacing + gridSpacing / 2;
+    node.y = Math.floor(index / numColumns) * gridSpacing + gridSpacing / 2;
+  });
+
+  const link = g
+    .selectAll(".link")
+    .data(jsonData.links)
+    .enter()
+    .append("path")
+    .attr("class", "link")
+    .attr("stroke", "#999")
+    .attr("stroke-width", 2)
+    .attr("stroke-dasharray", (d) =>
+      d.type === "bidirected-dashed" ? "5,5" : null
+    )
+    .attr("fill", "none")
+    .attr("marker-end", (d) =>
+      d.arrowhead === "normal" ? "url(#admg-normal-head)" : null
+    )
+    .attr("marker-start", (d) =>
+      d.arrowtail === "normal" ? "url(#admg-normal-tail)" : null
+    )
+    .attr("d", (d) => {
+      const dx = d.target.x - d.source.x;
+      const dy = d.target.y - d.source.y;
+      const dr = Math.sqrt(dx * dx + dy * dy);
+
+      return d.type === "bidirected-dashed"
+        ? `M${d.source.x},${d.source.y} A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`
+        : `M${d.source.x},${d.source.y} L${d.target.x},${d.target.y}`;
+    });
+
+  const node = g
+    .selectAll(".node")
+    .data(jsonData.nodes)
+    .enter()
+    .append("circle")
+    .attr("class", "node")
+    .attr("r", 15)
+    .attr("fill", "blue")
+    .attr("cx", (d) => d.x)
+    .attr("cy", (d) => d.y)
+    .call(
+      d3
+        .drag()
+        .on("drag", (event, d) => {
+          d.x = event.x;
+          d.y = event.y;
+          updateAdmgGrid(node, link, labels);
+        })
+        .on("end", (event, d) => {
+          d.x =
+            Math.round((d.x - gridSpacing / 2) / gridSpacing) * gridSpacing +
+            gridSpacing / 2;
+          d.y =
+            Math.round((d.y - gridSpacing / 2) / gridSpacing) * gridSpacing +
+            gridSpacing / 2;
+          updateAdmgGrid(node, link, labels);
+        })
+    );
+
+  const labels = g
+    .selectAll(".label")
+    .data(jsonData.nodes)
+    .enter()
+    .append("text")
+    .attr("class", "label")
+    .attr("text-anchor", "middle")
+    .attr("dy", ".35em")
+    .text((d) => d.id)
+    .attr("fill", "white")
+    .attr("x", (d) => d.x)
+    .attr("y", (d) => d.y);
+
+  updateAdmgGrid(node, link, labels);
+}
+
+function updateAdmgGrid(nodes, links, labels) {
+  nodes.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
+
+  links.attr("d", (d) => {
+    const dx = d.target.x - d.source.x;
+    const dy = d.target.y - d.source.y;
+    const dr = Math.sqrt(dx * dx + dy * dy);
+
+    return d.type === "bidirected-dashed"
+      ? `M${d.source.x},${d.source.y} A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`
+      : `M${d.source.x},${d.source.y} L${d.target.x},${d.target.y}`;
+  });
+
+  labels.attr("x", (d) => d.x).attr("y", (d) => d.y);
+}
+
 //------FUNCTION FOR BUTTON 1.2------//
 
 //Button for toggeling of the force in the forcesimulation to be able to freely
@@ -1239,15 +1372,8 @@ function drawGrid(svg, width, height, gridSpacing) {
 
 //REFACTORN DEN CODE OMG ES SMELLED
 
-//TODO: Snapping algorithmus bissl überarbeiten, anstatt zum nächsten clipped der knoten
-//immer relativ weit weg for whatever reason
-//-> Ich klippe immer zu dem nächsten grid punkt der sich rechts/unten von meiner aktuellen
-//position befindet anstatt einfach zum in alle richtungen nächsten snapping punkt
-
 //Eingabe hinzufügen um universal alle knoten und alle kanten zu vergrößern oder zu verkleinern
 //Dann später auch individuelle anpassungen durchführen
-
-//TODO: Für den ADMG auch die Grid-based visualization adden
 
 //TODO: Clear Checkboxes when Grid/Force-Visu button is pressed
 
