@@ -2,26 +2,63 @@
 //--------PAG SECTION START--------//
 //---------------------------------//
 
-//TODO: Es fehlt noch der basic ass .txt readin neben dem .csv readin bruh
+//----------------TODOS FOR PAG-----------------//
+
+/*convertMatrixToDot und pagCreateDotEdges die stelle finden die die überflüssige leerstelle hinzufügt
+in der dotsyntax wenn ich den "Matrix->DOT" Knopf drücke*/
+
+/*In pagDotToMatrixConversion kommentar ganz unten in der function verstehen*/
+
+//----------------TODOS FOR PAG-----------------//
+
+//------------------------------------------------------------//
+
+//----------------TODOS FOR PAG AND ADMG-----------------//
+
+/*TODO: Es fehlt noch der basic ass .txt readin neben dem .csv readin bei function pagFileReader()*/
+
+/*parsePagContent und parseAdmgContent sind tatsächlich 1:1 gleich und können zusammen gelegt werden.*/
+/*formatMatrix (für den ADMG) und pagFormatMatrix sind auch 1:1 gleich und können zsm gelegt werden.*/
+
+/*TODO: pagFileReader und admgFileReader sind !FAST! gleich. Bei der ADMG variante wird noch eine
+Variable "type" übergeben, könnte man theoretisch beim PAG dann immer mit "null" aufrufen,
+aber idk ob das so schön ist, dann könnte man die beiden zu einer function pagAndAdmgFileReader() 
+vereigigen ==> Würde auch änderung von processFunction() nach sich ziehen.*/
+
+//----------------TODOS FOR PAG AND ADMG-----------------//
+
+//------------------------------------------------------------//
+
+//---------------TODOS FOR VISUALISIERUNG PAG-----------------//
+
+//TODO: edge-länge und node-radius abhängig von der menge an knoten machen,
+//dabei beachten das dann auch die arrowtypen variablen als parameter brauchen, damit sie
+//am knoten korrekt abgebildet werden
+
+//TODO: Als USER die kantenlänge einstellen können, einmal mit einem wert für alle kanten
+//und dann kann man doch bestimmt auch iwie einzelne kanten individuell anwählen
+//und deren länge dann anpassen
+
+//---------------TODOS FOR VISUALISIERUNG PAG-----------------//
 
 //START: EVENT LISTENERS FOR BUTTONS FOR PAG//
 
 //BUTTON 1: const von "Einlesen" button
-const readinButtonForPag = document.getElementById("pagInitializeButton");
-readinButtonForPag.addEventListener("click", pagFileUpload);
+const readinPagButton = document.getElementById("pagInitializeButton");
+readinPagButton.addEventListener("click", pagFileUpload);
 
 //BUTTON 2: const von unserem "MatrixToDot" button
 const convertPagToDotButton = document.getElementById("pagToDotButton");
-convertPagToDotButton.addEventListener("click", convertEditedMatrixToDot);
+convertPagToDotButton.addEventListener("click", pagMatrixToDotConversion);
 
 //BUTTON 3: const von userem "DotToMatrix"
 const convertDotToMatrixButton = document.getElementById("dotToMatrixButton");
-convertDotToMatrixButton.addEventListener("click", convertDotToMatrix);
+convertDotToMatrixButton.addEventListener("click", pagDotToMatrixConversion);
 
 //END: EVENT LISTENERS FOR BUTTONS FOR PAG//
 
 //------FUNCTION FOR BUTTON 1------//
-//Nur für PAG Matrix, andere für ADMG erstellen
+
 function pagFileUpload() {
   const pagFileInput = document.getElementById("pagCsvFileInput").files[0];
   if (pagFileInput) {
@@ -29,8 +66,6 @@ function pagFileUpload() {
   }
 }
 
-//TODO: für amdg eigene erstellen
-//TODO: .txt support hinzufügen
 function pagFileReader(file, processFunction) {
   const fr = new FileReader();
 
@@ -43,7 +78,7 @@ function pagFileReader(file, processFunction) {
 }
 
 function initializePagConversion(csvContent) {
-  const parsedPagMatrix = pagParseContent(csvContent);
+  const parsedPagMatrix = parsePagContent(csvContent);
 
   //zeigt matrix aus csv an
   const unchangedMatrixOutput = pagFormatMatrix(csvContent);
@@ -55,7 +90,7 @@ function initializePagConversion(csvContent) {
 }
 
 function pagFormatMatrix(csvContent) {
-  const zeilen = pagParseContent(csvContent);
+  const zeilen = parsePagContent(csvContent);
   return zeilen.map((row) => row.join(", ")).join("\n");
 }
 
@@ -65,13 +100,13 @@ function pagFormatMatrix(csvContent) {
 
 //------FUNCTION FOR BUTTON 2------//
 
-function convertEditedMatrixToDot() {
+function pagMatrixToDotConversion() {
   //holt sich den inhalt der textarea mit gegebeber id
   const currentPagMatrix = document.getElementById(
     "pagDotToMatrixOutput"
   ).value;
   //bereitet aktuelle textfeld matrix vor
-  const parsedPagMatrix = pagParseContent(currentPagMatrix);
+  const parsedPagMatrix = parsePagContent(currentPagMatrix);
   //sorgt fürs magische matrix to dot umformen
   const dotGraph = convertMatrixToDot(parsedPagMatrix);
   document.getElementById("pagMatrixToDotOutput").value = dotGraph;
@@ -83,17 +118,15 @@ function convertEditedMatrixToDot() {
 
 //----ALLGEMEINE FUNCTION (1&2)----//
 
-//das kann ich doch einfach zu einer function zusammenfügen für PAG und ADMG
-//das ist ja deadass 1:1 das selbe
 //.csv content in angenehmeres Format umwandeln
-function pagParseContent(csvContent) {
+function parsePagContent(csvContent) {
   return csvContent
     .trim()
     .split("\n")
     .map((row) => row.split(","));
 }
 
-//refactored variante die die schon angepasste .csv und textarea direkt umwandelt
+//nimmt die schon angepasste .csv und textarea direkt umwandelt
 function convertMatrixToDot(parsedPagMatrix) {
   const knotenNamen = parsedPagMatrix[0].slice(1);
   const dotEdges = new Set();
@@ -153,7 +186,6 @@ function pagCreateDotEdges(
   } else if (kantenTypFromTo === 3 && kantenTypToFrom === 3) {
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=tail, arrowtail=tail];`;
   } else if (kantenTypFromTo === 3 && kantenTypToFrom === 1) {
-    //fehlte!
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=tail, arrowtail=odot];`;
   }
 
@@ -161,17 +193,17 @@ function pagCreateDotEdges(
   else if (kantenTypFromTo === 2) {
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=normal, arrowtail=none];`;
   } else if (kantenTypFromTo === 3) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=tail, arrowtail=none];`; //not tee!
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=tail, arrowtail=none];`;
   } else if (kantenTypFromTo === 1) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=none];`; //unsure, maybe switch
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=odot, arrowtail=none];`;
   }
   //kantenTypToFrom = 1,2,3 und kantenTypFromTo = 0:
   else if (kantenTypToFrom === 2) {
     return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=normal];`;
   } else if (kantenTypToFrom === 3) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=tail];`; //not tee!
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=tail];`;
   } else if (kantenTypToFrom === 1) {
-    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=odot];`; //unsure, maybe switch
+    return `${quellKnoten} -> ${zielKnoten} [dir=both, arrowhead=none, arrowtail=odot];`;
   }
   return null;
 }
@@ -183,7 +215,7 @@ function pagCreateDotEdges(
 //------FUNCTION FOR BUTTON 3------//
 
 //Converts Dot-language syntax into matrix
-function convertDotToMatrix() {
+function pagDotToMatrixConversion() {
   //dotSyntax aus der zweiten textarea
   const dotSyntax = document.getElementById("pagMatrixToDotOutput").value;
 
@@ -198,14 +230,11 @@ function convertDotToMatrix() {
     const quellKnoten = match[1];
     const zielKnoten = match[2];
 
-    //erst alle quellKnoten auf der rechten seite des Pfeils...
+    //erst alle quellKnoten auf der rechten seite des Pfeils, dann links, aber eig is reihenfolge egal
     if (!knotenSet.has(quellKnoten)) {
       knoten.push(quellKnoten);
       knotenSet.add(quellKnoten);
     }
-    //...dann alle zielKnoten von der linken Seite des Pfeils einlesen.
-    //sonst bleibt die in der Matrix gewünschte reihenfolge der knoten
-    //nicht erhalten, bzw wird durcheinander geworfen
     if (!knotenSet.has(zielKnoten)) {
       knoten.push(zielKnoten);
       knotenSet.add(zielKnoten);
@@ -301,10 +330,6 @@ function admgFileUpload() {
   }
 }
 
-//könnte man auch refactorn und doch einen bauen der für PAG und ADMG funktioniert
-//man müsste einfach nur bei der aufrufenden funktion für den PAG nen neuen typ
-//"pag" erstellen und könnte weiterhin damit arbeiten, processFunction dann
-//halt auch entsprechend anpassen
 function admgFileReader(file, processFunction, type) {
   const fr = new FileReader();
   fr.onload = function (event) {
@@ -337,8 +362,6 @@ function initializeAdmgConversion(csvContent, type) {
   document.getElementById("admgDotOutput").value = dotGraph;
 }
 
-//das kann ich doch einfach zu einer function zusammenfügen für PAG und ADMG
-//das ist ja deadass 1:1 das selbe
 function parseAdmgContent(csvContent) {
   return csvContent
     .trim()
@@ -346,15 +369,11 @@ function parseAdmgContent(csvContent) {
     .map((row) => row.split(","));
 }
 
-//das ist doch auch 1:1 das selbe oder?
 function formatMatrix(parsedMatrix) {
   return parsedMatrix.map((row) => row.join(", ")).join("\n");
 }
 
 //TODO: Errorcase einbauen, falls z.B. in directional matrix (A,B)=(B,A)=1 auftritt
-//TODO: BidirectionalEdges überschreiben aktuell die directional edges
-//stattdessen wollen wir aber natürlich bei ADMGs zwsichen zwei knoten
-//eine directed edge sowie eine bidirected edge haben können.
 function convertAdmgToDot(bidirectionalMatrix, directedMatrix) {
   const knoten = bidirectionalMatrix[0].slice(1);
   const dotEdges = new Set();
@@ -438,7 +457,6 @@ function admgDotToMatricesConversion() {
 
     //knoten dem array hinzufügen wie bei pag
     //hier wird auch die knotenreihenfolge bestimmt
-    //TODO: Reihenfolge an Matrix reihenfolge anpassen? notwenig ja/nein?
     if (!knotenSet.has(quellKnoten)) {
       knoten.push(quellKnoten);
       knotenSet.add(quellKnoten);
@@ -531,10 +549,7 @@ function admgDotToMatricesConversion() {
 //-------VISUAL SECTION START------//
 //---------------------------------//
 
-//ARTEN VON SIMULATIONEN: 1. Kraftbasiert, 2. Tree
-//TBH, beides einf implementieren und den nutzer dann auswählen lassen können oder?
-//aber so ne feste tree struktur is iwie auch nicht so geil um sachen zu adden oder?
-//idk ja, weil dann muss ich die hierachie dann ja auch notfalls ändern
+//ARTEN VON SIMULATIONEN: 1. Kraftbasiert, 2. Grid, (3. Hierachie/Tree?)
 
 //START: EVENT LISTENERS FOR BUTTONS FOR VISUALIZATION//
 
@@ -548,23 +563,10 @@ document
     const jsonData = convertPagDotToJson(dotSyntax);
 
     //visualize in a basic way with d3
-    visualizeGraphWithD3(jsonData);
+    visualizePagForceBasedWithD3(jsonData);
   });
 
-//BUTTON 1.2: dot in json umwandeln -> anschließend mit grid visualisieren mit d3 (PAG)
-document
-  .getElementById("pagDotGridBasedVisualizationButton")
-  .addEventListener("click", function () {
-    const dotSyntax = document.getElementById("pagMatrixToDotOutput").value;
-
-    //convert dot language into d3 readable json
-    const jsonData = convertPagDotToJson(dotSyntax);
-
-    //visualize in a basic way with d3
-    visualizeGraphGridBasedWithD3(jsonData);
-  });
-
-//BUTTON 2.1: dot in json umwandeln -> anschließend visualisieren mit d3 (ADMG)
+//BUTTON 1.2: dot in json umwandeln -> anschließend visualisieren mit d3 (ADMG)
 document
   .getElementById("admgDotVisualizationButton")
   .addEventListener("click", function () {
@@ -574,7 +576,20 @@ document
     const jsonData = convertAdmgDotToJson(dotSyntax);
 
     // Visualisiere die Daten mit D3.js
-    visualizeAdmgWithD3(jsonData);
+    visualizeAdmgForceBasedWithD3(jsonData);
+  });
+
+//BUTTON 2.1: dot in json umwandeln -> anschließend mit grid visualisieren mit d3 (PAG)
+document
+  .getElementById("pagDotGridBasedVisualizationButton")
+  .addEventListener("click", function () {
+    const dotSyntax = document.getElementById("pagMatrixToDotOutput").value;
+
+    //convert dot language into d3 readable json
+    const jsonData = convertPagDotToJson(dotSyntax);
+
+    //visualize in a basic way with d3
+    visualizePagGridBasedWithD3(jsonData);
   });
 
 //BUTTON 2.2: dot in json umwandeln -> anschließend mit grid visualisieren mit d3 (ADMG)
@@ -592,7 +607,7 @@ document
 
 //END: EVENT LISTENERS FOR BUTTONS FOR VISUALIZATION//
 
-//------FUNCTION FOR BUTTON 1------//
+//------FUNCTION FOR BUTTON 1.1 (PAG, Force)------//
 function convertPagDotToJson(dotSyntax) {
   //set für kanten aufgrund der uniqueness
   const knoten = new Set();
@@ -629,22 +644,13 @@ function convertPagDotToJson(dotSyntax) {
   return jsonData;
 }
 
-//nur none und normal edgetypes, aber dynamisch mit kanten
-function visualizeGraphWithD3(jsonData) {
+function visualizePagForceBasedWithD3(jsonData) {
   //START CANVAS SETUP://
   const containerId = "#graph-container";
   const width = d3.select(containerId).node().offsetWidth;
   const height = 600;
   const { svg, g } = createSvgCanvas(containerId, width, height);
   //END CANVAS SETUP://
-
-  //TODO: edge-länge und node-radius abhängig von der menge an knoten machen,
-  //dabei beachten das dann auch die arrowtypen variablen als parameter brauchen, damit sie
-  //am knoten korrekt abgebildet werden
-
-  //TODO: Als USER die kantenlänge einstellen können, einmal mit einem wert für alle kanten
-  //und dann kann man doch bestimmt auch iwie einzelne kanten individuell anwählen
-  //und deren länge dann anpassen
 
   setupArrowMarker(svg, "normal-head", "path", "black", null, "auto");
   setupArrowMarker(
@@ -757,53 +763,6 @@ function visualizeGraphWithD3(jsonData) {
   simulation.on("tick", tickHandler(link, node, labels));
 }
 
-//------FUNCTION FOR BUTTON 1------//
-
-//------FUNCTION FOR BUTTON 1 AND 2------//
-
-function createSvgCanvas(containerId, width, height) {
-  //clear container
-  d3.select(containerId).selectAll("*").remove();
-
-  //svg element erstelllen
-  const container = d3.select(containerId);
-  const svg = container
-    .append("svg")
-    .attr("width", width)
-    .attr("height", height);
-
-  //everything in g is now zoomable, knotem, kanten, labels
-  const g = svg.append("g");
-
-  //zoom behavior
-  const zoom = d3
-    .zoom()
-    .on("zoom", (event) => g.attr("transform", event.transform));
-
-  //by deafault zoom is enabled
-  svg.call(zoom);
-
-  //EXPERIMENTELL: TOGGELING ZOOM
-  //helperfunction to disable/toggle zoom
-  setupZoomToggle(svg, zoom);
-
-  return { svg, g };
-}
-
-function setupForceSimulation(nodes, links, width, height) {
-  return d3
-    .forceSimulation(nodes)
-    .force(
-      "link",
-      d3
-        .forceLink(links)
-        .id((d) => d.id)
-        .distance(150)
-    )
-    .force("charge", d3.forceManyBody().strength(-400))
-    .force("center", d3.forceCenter(width / 2, height / 2));
-}
-
 function tickHandler(link, node, labels) {
   return () => {
     link
@@ -818,51 +777,9 @@ function tickHandler(link, node, labels) {
   };
 }
 
-function setupArrowMarker(svg, id, shape, fillColor, strokeColor, orient) {
-  //arrowmarker (0.1): none arrowhead //falls kein marker vorhanden -> null bzw. in Matrix 0.
-  //arrowmarker (0.2): none arrowtail //falls kein marker vorhanden -> null bzw. in Matrix 0.
-  //arrowmarker (1.1): normal arrowhead
-  //arrowmarker (1.2): normal arrowtail
-  //arrowmarker (2.1): odot arrowhead
-  //arrowmarker (2.2): odot arrowtail
-  //arrowmarker (3.1): tail arrowhead //später unsichtbar machen
-  //arrowmarker (3.2): tail arrowtail //später unsichtbar machen
-  const marker = svg
-    .append("defs")
-    .append("marker")
-    .attr("id", id)
-    .attr("viewBox", "0 -5 10 10")
-    .attr("refX", 22)
-    .attr("refY", 0)
-    .attr("markerWidth", 6)
-    .attr("markerHeight", 6)
-    .attr("orient", orient);
+//------FUNCTION FOR BUTTON 1.1 (PAG, Force)------//
 
-  if (shape === "path") {
-    marker.append("path").attr("d", "M0,-5L10,0L0,5").attr("fill", fillColor);
-  } else if (shape === "circle") {
-    marker
-      .append("circle")
-      .attr("cx", 5)
-      .attr("cy", 0)
-      .attr("r", 4)
-      .attr("fill", fillColor)
-      .attr("stroke", strokeColor)
-      .attr("stroke-width", 2);
-  } else if (shape === "rect") {
-    marker
-      .append("rect")
-      .attr("x", 0)
-      .attr("y", -5)
-      .attr("width", 10)
-      .attr("height", 10)
-      .attr("fill", fillColor);
-  }
-}
-
-//------FUNCTION FOR BUTTON 1 AND 2------//
-
-//------FUNCTION FOR BUTTON 2------//
+//------FUNCTION FOR BUTTON 2.1------//
 
 function convertAdmgDotToJson(dotSyntax) {
   const knoten = new Set();
@@ -928,7 +845,7 @@ function convertAdmgDotToJson(dotSyntax) {
   return jsonData;
 }
 
-function visualizeAdmgWithD3(jsonData) {
+function visualizeAdmgForceBasedWithD3(jsonData) {
   //canvas setup
   const containerId = "#graph-container";
   const width = d3.select(containerId).node().offsetWidth;
@@ -1036,7 +953,25 @@ function visualizeAdmgWithD3(jsonData) {
   });
 }
 
-//------FUNCTION FOR BUTTON 2------//
+//------FUNCTION FOR BUTTON 2.1------//
+
+//------FUNCTION FOR BUTTON 1.1 AND 2.1 (PAG, ADMG, Force)------//
+
+function setupForceSimulation(nodes, links, width, height) {
+  return d3
+    .forceSimulation(nodes)
+    .force(
+      "link",
+      d3
+        .forceLink(links)
+        .id((d) => d.id)
+        .distance(150)
+    )
+    .force("charge", d3.forceManyBody().strength(-400))
+    .force("center", d3.forceCenter(width / 2, height / 2));
+}
+
+//------FUNCTION FOR BUTTON 1.1 AND 2.1 (PAG, ADMG, Force)------//
 
 //TODO iwann: gucken wie die initiale visualisierung schöner wird, was für clippings es gibt
 //automatic layouts etc, damit das ganze schöner aussieht, wie bei dagitty oder so
@@ -1046,13 +981,11 @@ function visualizeAdmgWithD3(jsonData) {
 //dann die arrowmarker der kante auswählen können und das ganze in dot-syntax übersetzen
 //von da aus kann ich dann ja schon dot->matrix übersetzung machen.
 
-//visualizeGraphGridBasedWithD3  <- implement this, refine the initial version, add edges correctly
-//add arrowmarkers correctly, add drag and drop, add colission avoidance between nodes and edges
+//TODO: colission avoidance
 
-//------FUNCTION FOR BUTTON 1.2------//
+//------FUNCTION FOR BUTTON 2.1 (PAG, Grid)------//
 
-//Hier gibts eig nix zum refactorn
-function visualizeGraphGridBasedWithD3(jsonData) {
+function visualizePagGridBasedWithD3(jsonData) {
   // START CANVAS SETUP
   const containerId = "#graph-container";
   const width = d3.select(containerId).node().offsetWidth;
@@ -1170,10 +1103,10 @@ function visualizeGraphGridBasedWithD3(jsonData) {
     .attr("x", (d) => d.x)
     .attr("y", (d) => d.y);
 
-  updateGrid(node, link, labels);
+  updatePagGrid(node, link, labels);
 }
 
-function updateGrid(node, link, labels) {
+function updatePagGrid(node, link, labels) {
   function update() {
     node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
 
@@ -1190,7 +1123,10 @@ function updateGrid(node, link, labels) {
   update(); //animation loop
 }
 
-//Hier gibts eig nix zum refactorn
+//------FUNCTION FOR BUTTON 2.1 (PAG, Grid)------//
+
+//------FUNCTION FOR BUTTON 2.2 (ADMG, Grid)------//
+
 function visualizeAdmgGridBasedWithD3(jsonData) {
   const containerId = "#graph-container";
   const width = d3.select(containerId).node().offsetWidth;
@@ -1309,7 +1245,101 @@ function updateAdmgGrid(nodes, links, labels) {
   labels.attr("x", (d) => d.x).attr("y", (d) => d.y);
 }
 
-//------FUNCTION FOR BUTTON 1.2------//
+//------FUNCTION FOR BUTTON 2.2 (ADMG, Grid)------//
+
+//------FUNCTION FOR BUTTON 1.1, 2.1 AND 1.2, 2.2 (PAG, ADMG, Force, Grid)------//
+
+function createSvgCanvas(containerId, width, height) {
+  //clear container
+  d3.select(containerId).selectAll("*").remove();
+
+  //svg element erstelllen
+  const container = d3.select(containerId);
+  const svg = container
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+  //everything in g is now zoomable, knotem, kanten, labels
+  const g = svg.append("g");
+
+  //zoom behavior
+  const zoom = d3
+    .zoom()
+    .on("zoom", (event) => g.attr("transform", event.transform));
+
+  //by deafault zoom is enabled
+  svg.call(zoom);
+
+  //EXPERIMENTELL: TOGGELING ZOOM
+  //helperfunction to disable/toggle zoom
+  setupZoomToggle(svg, zoom);
+
+  return { svg, g };
+}
+
+function setupArrowMarker(svg, id, shape, fillColor, strokeColor, orient) {
+  //arrowmarker (0.1): none arrowhead //falls kein marker vorhanden -> null bzw. in Matrix 0.
+  //arrowmarker (0.2): none arrowtail //falls kein marker vorhanden -> null bzw. in Matrix 0.
+  //arrowmarker (1.1): normal arrowhead
+  //arrowmarker (1.2): normal arrowtail
+  //arrowmarker (2.1): odot arrowhead
+  //arrowmarker (2.2): odot arrowtail
+  //arrowmarker (3.1): tail arrowhead //später unsichtbar machen
+  //arrowmarker (3.2): tail arrowtail //später unsichtbar machen
+  const marker = svg
+    .append("defs")
+    .append("marker")
+    .attr("id", id)
+    .attr("viewBox", "0 -5 10 10")
+    .attr("refX", 22)
+    .attr("refY", 0)
+    .attr("markerWidth", 6)
+    .attr("markerHeight", 6)
+    .attr("orient", orient);
+
+  if (shape === "path") {
+    marker.append("path").attr("d", "M0,-5L10,0L0,5").attr("fill", fillColor);
+  } else if (shape === "circle") {
+    marker
+      .append("circle")
+      .attr("cx", 5)
+      .attr("cy", 0)
+      .attr("r", 4)
+      .attr("fill", fillColor)
+      .attr("stroke", strokeColor)
+      .attr("stroke-width", 2);
+  } else if (shape === "rect") {
+    marker
+      .append("rect")
+      .attr("x", 0)
+      .attr("y", -5)
+      .attr("width", 10)
+      .attr("height", 10)
+      .attr("fill", fillColor);
+  }
+}
+
+//------FUNCTION FOR BUTTON 1.1, 2.1 AND 1.2, 2.2 (PAG, ADMG, Force, Grid)------//
+
+//-------------------------------------------------------------------------//
+
+//--------Hier kommt jetzt die svg interactivity hin----------//
+
+//.....................
+
+//--------Hier kommt jetzt die svg interactivity hin----------//
+
+
+//---------------------------------//
+//--------VISUAL SECTION END-------//
+//---------------------------------//
+
+//-------------------------------------------------------------------------//
+
+//---------------------------------//
+//-----EXPERIMENT SECTION START----//
+//---------------------------------//
 
 //Button for toggeling of the force in the forcesimulation to be able to freely
 //drag and drop something
