@@ -635,7 +635,13 @@ function convertPagDotToJson(dotSyntax) {
     links.push({ source, target, arrowhead, arrowtail });
   }
 
-  const nodesArray = Array.from(knoten).map((node) => ({ id: node }));
+  //Wir müssen prüfen ob ein variable name doppelt ist und sagen das geht nicht 
+  //wie bei dagitty, dann sparen wir uns einen weiteren richtigen unique id parameter
+  const nodesArray = Array.from(knoten).map((node) => ({
+    id: node,
+    x: null, // Initialisiert mit null
+    y: null, // Initialisiert mit null
+}));
 
   const jsonData = {
     nodes: nodesArray,
@@ -1038,8 +1044,10 @@ function visualizePagGridBasedWithD3(jsonData) {
   const gridSpacing = 100;
 
   jsonData.nodes.forEach((node, index) => {
-    node.x = (index % numColumns) * gridSpacing + gridSpacing / 2;
-    node.y = Math.floor(index / numColumns) * gridSpacing + gridSpacing / 2;
+    if (node.x === null || node.y === null) {
+      node.x = (index % numColumns) * gridSpacing + gridSpacing / 2;
+      node.y = Math.floor(index / numColumns) * gridSpacing + gridSpacing / 2;
+    }
   });
 
   //edges
@@ -1409,6 +1417,21 @@ function addEdgeBetweenSelectedNodes() {
     arrowtail: "none",
   }); //kante in jsonData hinzufügen
 
+  //speichert die aktuelle jsonData koordinaten aus pagVisToFooOutput
+  const storedData = JSON.parse(document.getElementById("pagVisToFooOutput").value || "{}");
+
+  //Aktualisiere jsonData mit gespeicherten Koordinaten
+  jsonData.nodes.forEach((node) => {
+    const storedNode = storedData.nodes?.find((n) => n.id === node.id);
+    if (storedNode) {
+      node.x = storedNode.x;
+      node.y = storedNode.y;
+    }
+  });
+
+  //const jsonDataString = JSON.stringify(jsonData, null, 2);
+  //document.getElementById("admgDotOutput").value = jsonDataString;
+
   //visualisierung aktualisieren
 
   visualizePagGridBasedWithD3(jsonData);
@@ -1427,11 +1450,6 @@ function addEdgeBetweenSelectedNodes() {
 //können wir mit einem knopf nur dot-syntax -> jsondata -> visualisierung
 //aber wir wollen den dot-syntax step skippen und dafür jsondata direkt mit
 //koordinaten verarbeiten.
-
-function updateGraphVisualization() {
-  const jsonData = getJsonDataFromDot();
-  visualizePagGridBasedWithD3(jsonData);
-}
 
 function resetSelection() {
   selectedNode1 = null;
