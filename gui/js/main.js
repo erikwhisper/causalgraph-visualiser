@@ -635,13 +635,13 @@ function convertPagDotToJson(dotSyntax) {
     links.push({ source, target, arrowhead, arrowtail });
   }
 
-  //Wir müssen prüfen ob ein variable name doppelt ist und sagen das geht nicht 
+  //Wir müssen prüfen ob ein variable name doppelt ist und sagen das geht nicht
   //wie bei dagitty, dann sparen wir uns einen weiteren richtigen unique id parameter
   const nodesArray = Array.from(knoten).map((node) => ({
     id: node,
     x: null, // Initialisiert mit null
     y: null, // Initialisiert mit null
-}));
+  }));
 
   const jsonData = {
     nodes: nodesArray,
@@ -1123,7 +1123,7 @@ function visualizePagGridBasedWithD3(jsonData) {
   //ADDED for drawing interactive edges
   svg.on("click", (event) => {
     if (!event.target.closest(".node")) {
-      resetSelection(); // Auswahl zurücksetzen
+      resetNodeSelection(); // Auswahl zurücksetzen
     }
   });
   //ADDED for drawing interactive edges
@@ -1367,60 +1367,54 @@ function handleNodeClick(event, node) {
   } else if (!selectedNode2 && node !== selectedNode1) {
     selectedNode2 = node;
     highlightNode(node, "green");
-
     //add new edge
-    addEdgeBetweenSelectedNodes();
+    pagAddEdgeBetweenSelectedNodes();
   } else {
-    resetSelection();
+    resetNodeSelection();
   }
 }
 
-function addEdgeBetweenSelectedNodes() {
+function pagAddEdgeBetweenSelectedNodes() {
   if (!selectedNode1 || !selectedNode2) return;
 
+  //update dot-syntax
   const dotField = document.getElementById("pagMatrixToDotOutput");
   let dotSyntax = dotField.value.trim();
-
-  //define new edge, console warnings obsolete
-  if (dotSyntax.endsWith("}")) {
-    dotSyntax = dotSyntax.slice(0, -1).trim();
-  } else {
-    console.warn("DOT-Syntax hat keine schließende Klammer, sie wird ergänzt.");
-  }
-
-  //define new edge
-  const newEdge = `"${selectedNode1.id}" -> "${selectedNode2.id}" [dir=both, arrowhead=normal, arrowtail=none];`;
-
-  //checks if edge already exist, currently jus
-  //1:1, muss darauf reduzieren zu checken ob
-  //zwischen den zwei knoten IRGENDeine edge existiert
-  if (!dotSyntax.includes(newEdge)) {
-    dotSyntax += `\n${newEdge}`;
-    console.log("Neue Kante hinzugefügt:", newEdge);
-  } else {
-    console.warn("Die Kante existiert bereits in der DOT-Syntax.");
-  }
-
-  //hardcoded klammer ans ende wegen dot-syntax vorgabe
-  dotSyntax += "\n}";
-
-  //update dot-syntax
+  const edgeAttributes = "[dir=both, arrowhead=normal, arrowtail=none]";
+  dotSyntax = pagAddEdgeToDot(
+    dotSyntax,
+    selectedNode1.id,
+    selectedNode2.id,
+    edgeAttributes
+  );
   dotField.value = dotSyntax;
 
-  //update jsonData
-  const jsonData = getJsonDataFromDot(); //json aus der DOT-Syntax holen
-  //das hier anders lösen.
-  jsonData.links.push({
-    source: selectedNode1.id,
-    target: selectedNode2.id,
-    arrowhead: "normal",
-    arrowtail: "none",
-  }); //kante in jsonData hinzufügen
+  //update Json-data
+  const jsonData = getJsonDataFromDot();
+  pagAddEdgeToJsonData(
+    jsonData,
+    selectedNode1.id,
+    selectedNode2.id,
+    "normal",
+    "none"
+  );
 
-  //speichert die aktuelle jsonData koordinaten aus pagVisToFooOutput
-  const storedData = JSON.parse(document.getElementById("pagVisToFooOutput").value || "{}");
+  //speichert aktuelle koordinaten vorm adden der neuen edge und übergibt diese dann der jsonData
+  //zum neu zeichnen
+  const storedData = JSON.parse(
+    document.getElementById("pagVisToFooOutput").value || "{}"
+  );
+  updateNodeCoordinates(jsonData, storedData);
 
-  //Aktualisiere jsonData mit gespeicherten Koordinaten
+  //update thr visualization
+  visualizePagGridBasedWithD3(jsonData);
+  displayJsonData(jsonData);
+
+  resetNodeSelection();
+}
+
+//update jsonData node koordinaten mit stored data
+function updateNodeCoordinates(jsonData, storedData) {
   jsonData.nodes.forEach((node) => {
     const storedNode = storedData.nodes?.find((n) => n.id === node.id);
     if (storedNode) {
@@ -1428,17 +1422,34 @@ function addEdgeBetweenSelectedNodes() {
       node.y = storedNode.y;
     }
   });
+}
 
-  //const jsonDataString = JSON.stringify(jsonData, null, 2);
-  //document.getElementById("admgDotOutput").value = jsonDataString;
+//update new edge to dot-syntax
+function pagAddEdgeToDot(dotSyntax, sourceId, targetId, edgeAttributes) {
+  if (dotSyntax.endsWith("}")) {
+    dotSyntax = dotSyntax.slice(0, -1).trim();
+  }
 
-  //visualisierung aktualisieren
+  const newEdge = `"${sourceId}" -> "${targetId}" ${edgeAttributes};`;
 
-  visualizePagGridBasedWithD3(jsonData);
-  displayJsonData(jsonData);
+  if (!dotSyntax.includes(newEdge)) {
+    dotSyntax += `\n${newEdge}`;
+    console.log("Neue Kante hinzugefügt:", newEdge);
+  } else {
+    console.warn("Die Kante existiert bereits in der DOT-Syntax.");
+  }
 
-  //auswahl der knoten zurücksetzen
-  resetSelection();
+  return `${dotSyntax}\n}`;
+}
+
+// Add a new edge to JSON data
+function pagAddEdgeToJsonData(jsonData, sourceId, targetId, arrowhead, arrowtail) {
+  jsonData.links.push({
+    source: sourceId,
+    target: targetId,
+    arrowhead,
+    arrowtail,
+  });
 }
 
 //TODO: aktuell malen wir das komplette ding wieder einfach basiert auf der jsonData
@@ -1451,7 +1462,7 @@ function addEdgeBetweenSelectedNodes() {
 //aber wir wollen den dot-syntax step skippen und dafür jsondata direkt mit
 //koordinaten verarbeiten.
 
-function resetSelection() {
+function resetNodeSelection() {
   selectedNode1 = null;
   selectedNode2 = null;
   d3.selectAll(".node").attr("fill", "blue"); //zurücksetzen der knotenfarben
