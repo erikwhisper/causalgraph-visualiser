@@ -1365,13 +1365,31 @@ function handleNodeClick(event, node) {
     selectedNode1 = node;
     highlightNode(node, "green");
   } else if (!selectedNode2 && node !== selectedNode1) {
+    // Zweiten Knoten auswählen
     selectedNode2 = node;
+    const dotSyntax = document
+      .getElementById("pagMatrixToDotOutput")
+      .value.trim();
+    //hier wird gechekt ob schon eine kante zwischen den beiden knoten existiert
+    //idk ob ich hier dotSyntax nehme oder lieber die uneditable jsonData
+    //eig wer jsonData sicherer, aber dann müstte ich die hier auch reingeben und mhm idk
+    if (doesEdgeExist(dotSyntax, selectedNode1.id, selectedNode2.id)) {
+      resetNodeSelection(); // Auswahl zurücksetzen, wenn die Kante existiert
+      return;
+    }
+    //falls keine edge existiert, alles normal
     highlightNode(node, "green");
-    //add new edge
     pagAddEdgeBetweenSelectedNodes();
   } else {
     resetNodeSelection();
   }
+}
+
+function doesEdgeExist(dotSyntax, sourceId, targetId) {
+  const edgeRegex = new RegExp(
+    `("${sourceId}" -> "${targetId}"|` + `"${targetId}" -> "${sourceId}")`
+  );
+  return edgeRegex.test(dotSyntax);
 }
 
 function pagAddEdgeBetweenSelectedNodes() {
@@ -1443,7 +1461,13 @@ function pagAddEdgeToDot(dotSyntax, sourceId, targetId, edgeAttributes) {
 }
 
 // Add a new edge to JSON data
-function pagAddEdgeToJsonData(jsonData, sourceId, targetId, arrowhead, arrowtail) {
+function pagAddEdgeToJsonData(
+  jsonData,
+  sourceId,
+  targetId,
+  arrowhead,
+  arrowtail
+) {
   jsonData.links.push({
     source: sourceId,
     target: targetId,
@@ -1451,16 +1475,6 @@ function pagAddEdgeToJsonData(jsonData, sourceId, targetId, arrowhead, arrowtail
     arrowtail,
   });
 }
-
-//TODO: aktuell malen wir das komplette ding wieder einfach basiert auf der jsonData
-//ohne koordinaten oder? Wir wollen aber natürlich das ganze dann mit koordinaten haben
-//und nicht wieder mit initial daten, also müssen wir wieder irgendwie die letzten
-//daten zwischenspeichern und damit dann zeichnen. Wir wollen ja auch eine
-//jsonData version in die textarea von uns aus schreiben können und diese dann
-//visualisieren lassen. Aktuell ist dem programm ja egal was drin steht, aktuell
-//können wir mit einem knopf nur dot-syntax -> jsondata -> visualisierung
-//aber wir wollen den dot-syntax step skippen und dafür jsondata direkt mit
-//koordinaten verarbeiten.
 
 function resetNodeSelection() {
   selectedNode1 = null;
