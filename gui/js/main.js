@@ -550,6 +550,8 @@ function admgDotToMatricesConversion() {
 //---------------------------------//
 
 //ARTEN VON SIMULATIONEN: 1. Kraftbasiert, 2. Grid, (3. Hierachie/Tree?)
+let selectedNode1 = null;
+let selectedNode2 = null;
 
 //START: EVENT LISTENERS FOR BUTTONS FOR VISUALIZATION//
 
@@ -590,6 +592,9 @@ document
 
     //visualize in a basic way with d3
     visualizePagGridBasedWithD3(jsonData);
+
+    //zeigt jsondata an unsere resafe/safe/reenter datenstructure
+    displayJsonData(jsonData);
   });
 
 //BUTTON 2.2: dot in json umwandeln -> anschließend mit grid visualisieren mit d3 (ADMG)
@@ -1073,6 +1078,10 @@ function visualizePagGridBasedWithD3(jsonData) {
     .attr("fill", "blue")
     .attr("cx", (d) => d.x)
     .attr("cy", (d) => d.y)
+    //ADDED for drawing interactive edges
+    .attr("id", (d) => `node-${d.id}`) // Eindeutige ID für jedes SVG-Element
+    .on("click", handleNodeClick) // Klick-Event hinzufügen
+    //ADDED for drawing interactive edges
     .call(
       d3
         .drag()
@@ -1102,6 +1111,14 @@ function visualizePagGridBasedWithD3(jsonData) {
     .attr("fill", "white")
     .attr("x", (d) => d.x)
     .attr("y", (d) => d.y);
+
+  //ADDED for drawing interactive edges
+  svg.on("click", (event) => {
+    if (!event.target.closest(".node")) {
+      resetSelection(); // Auswahl zurücksetzen
+    }
+  });
+  //ADDED for drawing interactive edges
 
   updatePagGrid(node, link, labels);
 }
@@ -1326,10 +1343,120 @@ function setupArrowMarker(svg, id, shape, fillColor, strokeColor, orient) {
 
 //--------Hier kommt jetzt die svg interactivity hin----------//
 
-//.....................
+//IMPLEMENTED FOR: (Pag, Grid) ONLY!
+
+function getJsonDataFromDot() {
+  const dotSyntax = document.getElementById("pagMatrixToDotOutput").value;
+  return convertPagDotToJson(dotSyntax);
+}
+
+function handleNodeClick(event, node) {
+  event.stopPropagation();
+
+  if (!selectedNode1) {
+    selectedNode1 = node;
+    highlightNode(node, "green");
+  } else if (!selectedNode2 && node !== selectedNode1) {
+    selectedNode2 = node;
+    highlightNode(node, "green");
+
+    //add new edge
+    addEdgeBetweenSelectedNodes();
+  } else {
+    resetSelection();
+  }
+}
+
+function addEdgeBetweenSelectedNodes() {
+  if (!selectedNode1 || !selectedNode2) return;
+
+  const dotField = document.getElementById("pagMatrixToDotOutput");
+  let dotSyntax = dotField.value.trim();
+
+  //define new edge, console warnings obsolete
+  if (dotSyntax.endsWith("}")) {
+    dotSyntax = dotSyntax.slice(0, -1).trim();
+  } else {
+    console.warn("DOT-Syntax hat keine schließende Klammer, sie wird ergänzt.");
+  }
+
+  //define new edge
+  const newEdge = `"${selectedNode1.id}" -> "${selectedNode2.id}" [dir=both, arrowhead=normal, arrowtail=none];`;
+
+  //checks if edge already exist, currently jus
+  //1:1, muss darauf reduzieren zu checken ob
+  //zwischen den zwei knoten IRGENDeine edge existiert
+  if (!dotSyntax.includes(newEdge)) {
+    dotSyntax += `\n${newEdge}`;
+    console.log("Neue Kante hinzugefügt:", newEdge);
+  } else {
+    console.warn("Die Kante existiert bereits in der DOT-Syntax.");
+  }
+
+  //hardcoded klammer ans ende wegen dot-syntax vorgabe
+  dotSyntax += "\n}";
+
+  //update dot-syntax
+  dotField.value = dotSyntax;
+
+  //update jsonData
+  const jsonData = getJsonDataFromDot(); //json aus der DOT-Syntax holen
+  //das hier anders lösen.
+  jsonData.links.push({
+    source: selectedNode1.id,
+    target: selectedNode2.id,
+    arrowhead: "normal",
+    arrowtail: "none",
+  }); //kante in jsonData hinzufügen
+
+  //visualisierung aktualisieren
+
+  visualizePagGridBasedWithD3(jsonData);
+  displayJsonData(jsonData);
+
+  //auswahl der knoten zurücksetzen
+  resetSelection();
+}
+
+//TODO: aktuell malen wir das komplette ding wieder einfach basiert auf der jsonData
+//ohne koordinaten oder? Wir wollen aber natürlich das ganze dann mit koordinaten haben
+//und nicht wieder mit initial daten, also müssen wir wieder irgendwie die letzten
+//daten zwischenspeichern und damit dann zeichnen. Wir wollen ja auch eine
+//jsonData version in die textarea von uns aus schreiben können und diese dann
+//visualisieren lassen. Aktuell ist dem programm ja egal was drin steht, aktuell
+//können wir mit einem knopf nur dot-syntax -> jsondata -> visualisierung
+//aber wir wollen den dot-syntax step skippen und dafür jsondata direkt mit
+//koordinaten verarbeiten.
+
+function updateGraphVisualization() {
+  const jsonData = getJsonDataFromDot();
+  visualizePagGridBasedWithD3(jsonData);
+}
+
+function resetSelection() {
+  selectedNode1 = null;
+  selectedNode2 = null;
+  d3.selectAll(".node").attr("fill", "blue"); //zurücksetzen der knotenfarben
+}
+
+function highlightNode(node, color) {
+  d3.selectAll(".node")
+    .filter((d) => d === node)
+    .attr("fill", color);
+}
 
 //--------Hier kommt jetzt die svg interactivity hin----------//
 
+function displayJsonData(jsonData) {
+  const outputField = document.getElementById("pagVisToFooOutput");
+
+  function updateJsonOutput() {
+    outputField.value = JSON.stringify(jsonData, null, 2);
+    requestAnimationFrame(updateJsonOutput);
+  }
+
+  updateJsonOutput();
+}
 
 //---------------------------------//
 //--------VISUAL SECTION END-------//
