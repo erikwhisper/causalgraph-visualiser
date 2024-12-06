@@ -1353,6 +1353,7 @@ function setupArrowMarker(svg, id, shape, fillColor, strokeColor, orient) {
 
 //IMPLEMENTED FOR: (Pag, Grid) ONLY!
 
+
 function getJsonDataFromDot() {
   const dotSyntax = document.getElementById("pagMatrixToDotOutput").value;
   return convertPagDotToJson(dotSyntax);
@@ -1387,49 +1388,53 @@ function handleNodeClick(event, node) {
 
 function doesEdgeExist(dotSyntax, sourceId, targetId) {
   const edgeRegex = new RegExp(
-    `("${sourceId}" -> "${targetId}"|` + `"${targetId}" -> "${sourceId}")`
+    `("${sourceId}"\\s*->\\s*"${targetId}"|` +
+      `"${targetId}"\\s*->\\s*"${sourceId}")`
   );
   return edgeRegex.test(dotSyntax);
 }
 
-function pagAddEdgeBetweenSelectedNodes() {
-  if (!selectedNode1 || !selectedNode2) return;
+  function pagAddEdgeBetweenSelectedNodes() {
+    if (!selectedNode1 || !selectedNode2) return;
 
-  //update dot-syntax
-  const dotField = document.getElementById("pagMatrixToDotOutput");
-  let dotSyntax = dotField.value.trim();
-  const edgeAttributes = "[dir=both, arrowhead=normal, arrowtail=none]";
-  dotSyntax = pagAddEdgeToDot(
-    dotSyntax,
-    selectedNode1.id,
-    selectedNode2.id,
-    edgeAttributes
-  );
-  dotField.value = dotSyntax;
+    //update dot-syntax
+    const dotField = document.getElementById("pagMatrixToDotOutput");
+    let dotSyntax = dotField.value.trim();
+    const edgeAttributes = "[dir=both, arrowhead=normal, arrowtail=none]";
+    
 
-  //update Json-data
-  const jsonData = getJsonDataFromDot();
-  pagAddEdgeToJsonData(
-    jsonData,
-    selectedNode1.id,
-    selectedNode2.id,
-    "normal",
-    "none"
-  );
+    //update Json-data
+    const jsonData = getJsonDataFromDot();
+    pagAddEdgeToJsonData(
+      jsonData,
+      selectedNode1.id,
+      selectedNode2.id,
+      "normal",
+      "none"
+    );
 
-  //speichert aktuelle koordinaten vorm adden der neuen edge und übergibt diese dann der jsonData
-  //zum neu zeichnen
-  const storedData = JSON.parse(
-    document.getElementById("pagVisToFooOutput").value || "{}"
-  );
-  updateNodeCoordinates(jsonData, storedData);
+    //speichert aktuelle koordinaten vorm adden der neuen edge und übergibt diese dann der jsonData
+    //zum neu zeichnen
+    const storedData = JSON.parse(
+      document.getElementById("pagVisToFooOutput").value || "{}"
+    );
+    updateNodeCoordinates(jsonData, storedData);
 
-  //update thr visualization
-  visualizePagGridBasedWithD3(jsonData);
-  displayJsonData(jsonData);
+    //updated die dotSyntax, nachdem die jsonData geupdated wurde
+    dotSyntax = pagAddEdgeToDot(
+      dotSyntax,
+      selectedNode1.id,
+      selectedNode2.id,
+      edgeAttributes
+    );
+    dotField.value = dotSyntax;
 
-  resetNodeSelection();
-}
+    //update thr visualization
+    visualizePagGridBasedWithD3(jsonData);
+    displayJsonData(jsonData);
+
+    resetNodeSelection();
+  }
 
 //update jsonData node koordinaten mit stored data
 function updateNodeCoordinates(jsonData, storedData) {
